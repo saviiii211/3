@@ -1,0 +1,302 @@
+@import "tailwindcss";
+
+:root {
+  --hw-bg-chassis: #13171e;
+  --hw-bg-recess: #0b0e13;
+  --hw-border-steel: #2c3543;
+  --hw-amber: #f59e0b;
+  --hw-emerald: #10b981;
+  --hw-crimson: #ef4444;
+  --hw-sky: #38bdf8;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  background-color: #090c10;
+  color: #e2e8f0;
+  font-family: 'Chakra Petch', system-ui, sans-serif;
+  overscroll-behavior-y: contain;
+}
+
+.font-display {
+  font-family: 'Chakra Petch', system-ui, sans-serif;
+}
+
+.font-lcd {
+  font-family: 'Share Tech Mono', monospace;
+}
+
+.font-tech {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Brushed steel + carbon fiber tactical chassis */
+.hw-chassis-bg {
+  background-color: #0e1218;
+  background-image:
+    radial-gradient(circle at 18% 0%, rgba(56, 189, 248, 0.06), transparent 42%),
+    radial-gradient(circle at 82% 100%, rgba(245, 158, 11, 0.05), transparent 44%),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.015) 0px,
+      rgba(255, 255, 255, 0.015) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+}
+
+.hw-chassis {
+  background: linear-gradient(165deg, #1d232d 0%, #141922 52%, #0f131a 100%);
+  border: 1px solid #2d3645;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.65),
+    0 12px 28px rgba(0, 0, 0, 0.55);
+}
+
+.hw-carbon-bay {
+  background-color: #0c1016;
+  background-image:
+    linear-gradient(45deg, rgba(255, 255, 255, 0.025) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255, 255, 255, 0.025) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(0, 0, 0, 0.28) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(0, 0, 0, 0.28) 75%);
+  background-size: 8px 8px;
+  background-position: 0 0, 0 4px, 4px -4px, -4px 0;
+  box-shadow:
+    inset 0 3px 10px rgba(0, 0, 0, 0.85),
+    0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Engraved metallic nameplate */
+.hw-nameplate {
+  background: linear-gradient(180deg, #333c4b 0%, #202733 50%, #191f29 100%);
+  border: 1px solid #485468;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.6),
+    0 2px 6px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.85), 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* LCD / OLED screen with fine scanlines */
+.hw-lcd-screen {
+  position: relative;
+  background: linear-gradient(180deg, #061318 0%, #091d24 100%);
+  border: 2px solid #263140;
+  box-shadow:
+    inset 0 4px 12px rgba(0, 0, 0, 0.9),
+    inset 0 0 18px rgba(56, 189, 248, 0.12),
+    0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.hw-lcd-screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.22) 0px,
+    rgba(0, 0, 0, 0.22) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  border-radius: inherit;
+}
+
+.hw-phosphor-screen {
+  position: relative;
+  background: radial-gradient(circle at center, #082419 0%, #04130d 100%);
+  border: 2px solid #1e3a2f;
+  box-shadow:
+    inset 0 4px 14px rgba(0, 0, 0, 0.92),
+    inset 0 0 22px rgba(16, 185, 129, 0.14);
+}
+
+.hw-phosphor-screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.24) 0px,
+    rgba(0, 0, 0, 0.24) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  border-radius: inherit;
+}
+
+/* 3D Tactile recessed physical push-buttons */
+.hw-tactile-btn {
+  background: linear-gradient(180deg, #2a3342 0%, #1d2430 100%);
+  border: 1px solid #3f4c61;
+  border-radius: 0.65rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    0 4px 0 #0b0e14,
+    0 6px 12px rgba(0, 0, 0, 0.5);
+  transition: transform 90ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 90ms cubic-bezier(0.16, 1, 0.3, 1), background 150ms ease;
+}
+
+.hw-tactile-btn:hover:not(:disabled) {
+  background: linear-gradient(180deg, #323c4e 0%, #232b39 100%);
+  border-color: #52627b;
+}
+
+.hw-tactile-btn:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.55),
+    0 1px 0 #0b0e14,
+    0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.hw-btn-compact {
+  background: linear-gradient(180deg, #262f3d 0%, #19202b 100%);
+  border: 1px solid #394558;
+  border-radius: 0.5rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 2px 0 #0a0d12;
+  transition: transform 90ms ease, background 150ms ease;
+}
+
+.hw-btn-compact:active:not(:disabled) {
+  transform: translateY(1.5px);
+}
+
+/* Caution hazard stripe border */
+.hw-hazard-stripe {
+  background: repeating-linear-gradient(
+    -45deg,
+    #f59e0b,
+    #f59e0b 8px,
+    #111827 8px,
+    #111827 16px
+  );
+}
+
+/* Glass dome LEDs */
+.hw-led-dome {
+  position: relative;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 -2px 3px rgba(0, 0, 0, 0.65);
+}
+
+.hw-led-dome::after {
+  content: '';
+  position: absolute;
+  top: 18%;
+  left: 22%;
+  width: 34%;
+  height: 26%;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.55);
+  transform: rotate(-25deg);
+}
+
+.hw-led-off {
+  background: radial-gradient(circle at 35% 35%, #374151 0%, #111827 80%);
+}
+
+.hw-led-red-pulse {
+  background: radial-gradient(circle at 35% 35%, #fca5a5 0%, #ef4444 45%, #7f1d1d 100%);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.85), inset 0 -2px 3px rgba(0, 0, 0, 0.5);
+  animation: led-pulse-red 1s ease-in-out infinite;
+}
+
+.hw-led-green {
+  background: radial-gradient(circle at 35% 35%, #a7f3d0 0%, #10b981 45%, #064e3b 100%);
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.9), inset 0 -2px 3px rgba(0, 0, 0, 0.45);
+}
+
+.hw-led-amber {
+  background: radial-gradient(circle at 35% 35%, #fde68a 0%, #f59e0b 48%, #78350f 100%);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.8), inset 0 -2px 3px rgba(0, 0, 0, 0.45);
+}
+
+@keyframes led-pulse-red {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 14px rgba(239, 68, 68, 0.95);
+  }
+  50% {
+    opacity: 0.55;
+    box-shadow: 0 0 5px rgba(239, 68, 68, 0.45);
+  }
+}
+
+@keyframes hw-shake {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  15% { transform: translate3d(-6px, 2px, 0); }
+  30% { transform: translate3d(6px, -2px, 0); }
+  45% { transform: translate3d(-5px, -1px, 0); }
+  60% { transform: translate3d(5px, 2px, 0); }
+  75% { transform: translate3d(-3px, 0, 0); }
+}
+
+.animate-hw-shake {
+  animation: hw-shake 0.36s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes hw-strike-flash {
+  0% { opacity: 0.78; }
+  100% { opacity: 0; }
+}
+
+.animate-strike-flash {
+  animation: hw-strike-flash 0.55s ease-out forwards;
+}
+
+@keyframes radar-ping {
+  0% {
+    transform: scale(0.75);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+.animate-radar-ping {
+  animation: radar-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Leaflet Dark Radar overrides */
+.leaflet-container {
+  background: #070b10 !important;
+  font-family: 'Chakra Petch', sans-serif !important;
+}
+
+.leaflet-dark-tiles .leaflet-tile-pane {
+  filter: invert(100%) hue-rotate(180deg) brightness(92%) contrast(92%) saturate(65%);
+}
+
+.leaflet-control-attribution {
+  background: rgba(11, 14, 19, 0.78) !important;
+  color: #64748b !important;
+  font-size: 9px !important;
+}
+
+.leaflet-control-attribution a {
+  color: #94a3b8 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-hw-shake,
+  .animate-strike-flash,
+  .animate-radar-ping,
+  .hw-led-red-pulse {
+    animation: none !important;
+  }
+}

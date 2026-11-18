@@ -1,0 +1,6 @@
+{
+  "name": "Operațiunea 3 Ani — Consolă de Dezamorsare",
+  "description": "Consolă tactică interactivă cu 7 module de puzzle și navigare GPS în timp real pentru misiunea aniversară de 3 ani.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": []
+}
