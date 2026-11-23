@@ -14,8 +14,8 @@ export const PasswordsModule: React.FC<PasswordsModuleProps> = ({
   onSubmit,
 }) => {
   return (
-    <div className="hw-carbon-bay rounded-lg p-3.5 border border-slate-800/90">
-      {/* 5 Split-Flap Mechanical Letter Drums */}
+    <div className="recessed-bay p-3">
+      {/* 5 Heavy Split-Flap Mechanical Letter Drums */}
       <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
         {state.columns.map((letters, colIdx) => {
           const currentLetter = letters[state.indices[colIdx]];
@@ -25,28 +25,27 @@ export const PasswordsModule: React.FC<PasswordsModuleProps> = ({
                 type="button"
                 onClick={() => onStepColumn(colIdx, -1)}
                 aria-label={`Coloana ${colIdx + 1} litera anterioară`}
-                className="hw-tactile-btn w-full min-h-[40px] flex items-center justify-center text-slate-300"
+                className="mech-key w-full min-h-[42px] flex items-center justify-center text-stone-300 cursor-pointer"
               >
                 <ChevronUp className="w-5 h-5" aria-hidden="true" />
               </button>
 
-              {/* Split-flap Drum Display */}
+              {/* Split-flap Bakelite Drum Display */}
               <div
                 data-testid={`pwd-col-${colIdx}`}
-                className="relative w-full h-14 rounded-md bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 border-2 border-slate-700 shadow-inner flex items-center justify-center overflow-hidden"
+                className="relative w-full h-14 bakelite-surface flex items-center justify-center overflow-hidden"
               >
-                <span className="font-lcd text-3xl font-bold text-amber-300 tracking-wider select-none">
+                <span className="font-lcd text-3xl font-bold text-amber-200 tracking-wider select-none">
                   {currentLetter}
                 </span>
-                {/* Center split-flap hinge line */}
-                <div className="pointer-events-none absolute inset-x-0 top-1/2 h-px bg-black/75" />
+                <div className="pointer-events-none absolute inset-x-0 top-1/2 h-[2px] bg-black/85 border-b border-white/10" />
               </div>
 
               <button
                 type="button"
                 onClick={() => onStepColumn(colIdx, 1)}
                 aria-label={`Coloana ${colIdx + 1} litera următoare`}
-                className="hw-tactile-btn w-full min-h-[40px] flex items-center justify-center text-slate-300"
+                className="mech-key w-full min-h-[42px] flex items-center justify-center text-stone-300 cursor-pointer"
               >
                 <ChevronDown className="w-5 h-5" aria-hidden="true" />
               </button>
@@ -55,12 +54,12 @@ export const PasswordsModule: React.FC<PasswordsModuleProps> = ({
         })}
       </div>
 
-      {/* Massive SUBMIT Button with Hazard Stripes */}
-      <div className="mt-4 hw-hazard-stripe p-1.5 rounded-lg shadow-lg">
+      {/* Guarded Hazard-Striped Mechanical SUBMIT Switch */}
+      <div className="mt-4 hw-hazard-stripe p-1.5 shadow-[4px_6px_14px_rgba(0,0,0,0.8)]">
         <button
           type="button"
           onClick={onSubmit}
-          className="w-full min-h-[48px] rounded-md bg-gradient-to-b from-slate-800 to-slate-950 border border-amber-500/60 font-display text-sm font-bold tracking-[0.22em] text-amber-300 hover:text-amber-200 active:translate-y-0.5 transition-transform"
+          className="mech-key-bakelite w-full min-h-[48px] font-display text-sm font-bold tracking-[0.22em] text-amber-300 hover:text-amber-200 cursor-pointer"
         >
           SUBMIT
         </button>

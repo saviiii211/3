@@ -7,6 +7,7 @@ import {
 } from '../config';
 import { haversineDistanceMeters } from '../game/missionState';
 import type { EncryptedDestination } from '../config';
+import { SlottedScrew } from './ModuleCardShell';
 
 interface GpsRadarViewProps {
   unlocked: boolean;
@@ -41,7 +42,7 @@ export const GpsRadarView: React.FC<GpsRadarViewProps> = ({
     simulatedGps ? SINAIA_SIMULATED_ORIGIN : null
   );
   const [gpsStatus, setGpsStatus] = useState<string>(
-    simulatedGps ? 'Poziție simulată (Sinaia)' : 'Căutare sateliți GPS...'
+    simulatedGps ? 'SIMULARE SINAIA' : 'SCANARE SATELIȚI...'
   );
   const [routeStats, setRouteStats] = useState<{
     distanceMeters: number;
@@ -55,12 +56,12 @@ export const GpsRadarView: React.FC<GpsRadarViewProps> = ({
 
     if (simulatedGps) {
       setUserPos(SINAIA_SIMULATED_ORIGIN);
-      setGpsStatus('Mod simulare Sinaia activ');
+      setGpsStatus('SIMULARE SINAIA ACTIVĂ');
       return;
     }
 
     if (!('geolocation' in navigator)) {
-      setGpsStatus('GPS indisponibil pe acest dispozitiv');
+      setGpsStatus('GPS INDISPONIBIL');
       return;
     }
 
@@ -71,13 +72,13 @@ export const GpsRadarView: React.FC<GpsRadarViewProps> = ({
           lng: pos.coords.longitude,
           accuracy: pos.coords.accuracy,
         });
-        setGpsStatus(`Semnal GPS activ (±${Math.round(pos.coords.accuracy)} m)`);
+        setGpsStatus(`FIX GPS (±${Math.round(pos.coords.accuracy)} m)`);
       },
       (err) => {
         if (err.code === err.PERMISSION_DENIED) {
-          setGpsStatus('Permisiunea GPS a fost refuzată. Activează localizarea.');
+          setGpsStatus('PERMISIUNE GPS REFUZATĂ');
         } else {
-          setGpsStatus('Semnal GPS slab — în așteptare coordonate...');
+          setGpsStatus('SEMNAL SLAB — AȘTEPTARE...');
         }
       },
       {
@@ -134,8 +135,8 @@ export const GpsRadarView: React.FC<GpsRadarViewProps> = ({
       iconAnchor: [14, 14],
       html: `
         <div style="position:relative;width:28px;height:28px;display:flex;align-items:center;justify-content:center;">
-          <span class="animate-radar-ping" style="position:absolute;width:28px;height:28px;border-radius:9999px;background:rgba(56,189,248,0.45);"></span>
-          <span style="width:12px;height:12px;border-radius:9999px;background:#38bdf8;border:2px solid #ffffff;box-shadow:0 0 12px #38bdf8;"></span>
+          <span class="animate-radar-ping" style="position:absolute;width:28px;height:28px;border-radius:9999px;background:rgba(52,211,153,0.45);"></span>
+          <span style="width:12px;height:12px;border-radius:9999px;background:#34d399;border:2px solid #ffffff;box-shadow:0 0 12px #34d399;"></span>
         </div>
       `,
     });
@@ -173,7 +174,7 @@ export const GpsRadarView: React.FC<GpsRadarViewProps> = ({
       iconAnchor: [14, 14],
       html: `
         <div style="position:relative;width:28px;height:28px;display:flex;align-items:center;justify-content:center;">
-          <span class="animate-radar-ping" style="position:absolute;width:28px;height:28px;border-radius:9999px;background:rgba(245,158,11,0.4);"></span>
+          <span class="animate-radar-ping" style="position:absolute;width:28px;height:28px;border-radius:9999px;background:rgba(245,158,11,0.45);"></span>
           <span style="width:14px;height:14px;transform:rotate(45deg);background:#f59e0b;border:2px solid #fffbeb;box-shadow:0 0 14px #f59e0b;"></span>
         </div>
       `,
@@ -237,14 +238,12 @@ export const GpsRadarView: React.FC<GpsRadarViewProps> = ({
         );
 
         layer.clearLayers();
-        // Outer neon glow
         L.polyline(latLngs, {
           color: '#0284c7',
           weight: 9,
           opacity: 0.35,
           lineCap: 'round',
         }).addTo(layer);
-        // Core continuous neon blue street route
         L.polyline(latLngs, {
           color: '#38bdf8',
           weight: 4.5,
@@ -302,20 +301,22 @@ export const GpsRadarView: React.FC<GpsRadarViewProps> = ({
     return (
       <div
         data-testid="gps-locked-screen"
-        className="hw-chassis rounded-xl p-6 min-h-[420px] flex flex-col items-center justify-center text-center relative overflow-hidden"
+        className="chassis-plate metal-micrograin relative p-6 min-h-[430px] flex flex-col items-center justify-center text-center"
       >
-        <div className="hw-phosphor-screen w-24 h-24 rounded-full flex items-center justify-center mb-4 relative">
-          <span className="absolute inset-2 rounded-full border border-emerald-500/30 animate-ping" />
-          <Lock className="w-9 h-9 text-amber-400" aria-hidden="true" />
+        <SlottedScrew className="absolute top-2.5 left-2.5" angle={16} />
+        <SlottedScrew className="absolute top-2.5 right-2.5" angle={-28} />
+        <SlottedScrew className="absolute bottom-2.5 left-2.5" angle={48} />
+        <SlottedScrew className="absolute bottom-2.5 right-2.5" angle={-12} />
+
+        <div className="crt-phosphor-glass w-28 h-28 rounded-full flex items-center justify-center mb-4 relative overflow-hidden">
+          <span className="radar-sweep-beam absolute inset-0 rounded-full opacity-40" />
+          <Lock className="w-8 h-8 text-amber-400 relative z-10" aria-hidden="true" />
         </div>
-        <h2 className="font-display text-lg font-bold tracking-wide text-amber-300">
-          SEMNAL GPS BLOCAT
-        </h2>
-        <p className="font-tech text-xs text-slate-300 max-w-xs mt-2 leading-relaxed">
-          REZOLVĂ MODULUL 1 PENTRU INIȚIALIZARE
-        </p>
-        <p className="text-xs text-slate-500 mt-3 max-w-xs">
-          Harta tactică și localizarea în timp real devin active imediat după dezamorsarea primului modul.
+        <span className="brass-plaque px-2.5 py-0.5 font-tech text-[11px] font-bold text-amber-100 mb-2">
+          CANAL TELEMETRIE BLOCAT
+        </span>
+        <p className="font-tech text-xs text-stone-300">
+          REZOLVĂ MOD-01 PENTRU INIȚIALIZARE
         </p>
       </div>
     );
@@ -323,19 +324,26 @@ export const GpsRadarView: React.FC<GpsRadarViewProps> = ({
 
   return (
     <div className="space-y-3" data-testid="gps-unlocked-view">
-      {/* Top Map HUD */}
-      <div className="hw-chassis rounded-xl p-3.5">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <Radio className="w-4 h-4 text-sky-400 shrink-0" aria-hidden="true" />
+      {/* Instrument Telemetry & Precise Coordinates Strip */}
+      <div className="chassis-plate metal-micrograin relative p-3.5">
+        <SlottedScrew className="absolute top-2 left-2" angle={20} />
+        <SlottedScrew className="absolute top-2 right-2" angle={-32} />
+
+        <div className="flex items-center justify-between gap-2 px-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Radio className="w-4 h-4 text-emerald-400 shrink-0" aria-hidden="true" />
             <div className="min-w-0">
-              <p className="font-tech text-[11px] text-slate-300 truncate">{gpsStatus}</p>
-              <p className="font-display text-sm font-bold text-slate-100 truncate">
+              <p className="font-tech text-[10px] text-stone-400 truncate">
+                {gpsStatus}
+                {userPos &&
+                  ` · ${userPos.lat.toFixed(4)}°N ${userPos.lng.toFixed(4)}°E`}
+              </p>
+              <p className="font-display text-sm font-bold text-amber-200 truncate">
                 {activeDestination
                   ? activeDestination.codeName
                   : module2Solved
-                    ? 'Pregătit pentru misiunea din Sinaia'
-                    : 'Localizare activă · Nicio rută criptată'}
+                    ? 'STANDBY · SINAIA'
+                    : 'RECEPȚIE ACTIVĂ · FĂRĂ ȚINTĂ'}
               </p>
             </div>
           </div>
@@ -344,41 +352,69 @@ export const GpsRadarView: React.FC<GpsRadarViewProps> = ({
             type="button"
             onClick={recenterMap}
             aria-label="Centrează harta pe poziția curentă"
-            className="hw-btn-compact px-2.5 py-2 flex items-center gap-1.5 text-xs font-tech text-sky-300 shrink-0"
+            className="mech-toggle min-h-[42px] px-3 py-1.5 flex items-center gap-1.5 text-xs font-tech text-emerald-300 shrink-0 cursor-pointer"
           >
             <Compass className="w-4 h-4" aria-hidden="true" />
             <span>Centru</span>
           </button>
         </div>
 
-        {/* Distance & ETA Metrics when Route is Active */}
         {activeDestination && routeStats && (
-          <div className="grid grid-cols-2 gap-2.5 mt-3 pt-3 border-t border-slate-800">
-            <div className="hw-lcd-screen rounded-lg px-3 py-2">
-              <span className="font-tech text-[10px] text-slate-400 block">DISTANȚĂ RĂMASĂ</span>
-              <span className="font-lcd text-2xl text-sky-300">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3 pt-2.5 border-t border-black/70 px-1">
+            <div className="crt-phosphor-glass px-3 py-1.5">
+              <span className="font-tech text-[9px] text-emerald-400/75 block relative z-10">
+                DISTANȚĂ
+              </span>
+              <span className="font-lcd text-2xl phosphor-text relative z-10">
                 {routeStats.distanceMeters} m
               </span>
             </div>
-            <div className="hw-lcd-screen rounded-lg px-3 py-2">
-              <span className="font-tech text-[10px] text-slate-400 block">MERS PE JOS (EST.)</span>
-              <span className="font-lcd text-2xl text-amber-300">
+            <div className="crt-amber-glass px-3 py-1.5">
+              <span className="font-tech text-[9px] text-amber-400/75 block relative z-10">
+                TIMP EST.
+              </span>
+              <span className="font-lcd text-2xl nixie-tube relative z-10">
                 ~{routeStats.durationMinutes} min
+              </span>
+            </div>
+            <div className="col-span-2 sm:col-span-1 crt-phosphor-glass px-3 py-1.5">
+              <span className="font-tech text-[9px] text-emerald-400/75 block relative z-10">
+                COORDONATE ȚINTĂ
+              </span>
+              <span className="font-tech text-xs phosphor-text relative z-10">
+                {activeDestination.lat.toFixed(4)}°N, {activeDestination.lng.toFixed(4)}°E
               </span>
             </div>
           </div>
         )}
       </div>
 
-      {/* Dark Leaflet Map Canvas */}
-      <div className="hw-chassis rounded-xl p-1.5 overflow-hidden">
-        <div className="relative isolate rounded-lg overflow-hidden border border-slate-800 h-[360px] sm:h-[420px] leaflet-dark-tiles">
+      {/* Oscilloscope / Polar Radar Housing around Leaflet Map */}
+      <div className="chassis-plate metal-micrograin relative p-2">
+        <div className="relative isolate overflow-hidden border-2 border-black h-[360px] sm:h-[420px] leaflet-dark-tiles bg-[#050806]">
           <div ref={mapContainerRef} className="w-full h-full z-0" />
 
+          {/* Polar Radar Grid + Rotating Sweep Wave (pointer-events-none) */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 z-[350] overflow-hidden flex items-center justify-center"
+          >
+            <div className="radar-sweep-beam w-[140%] aspect-square rounded-full opacity-45" />
+            <svg viewBox="0 0 400 400" className="absolute inset-0 w-full h-full opacity-35">
+              <circle cx="200" cy="200" r="65" fill="none" stroke="#34d399" strokeWidth="0.7" strokeDasharray="3 4" />
+              <circle cx="200" cy="200" r="130" fill="none" stroke="#34d399" strokeWidth="0.7" strokeDasharray="3 4" />
+              <circle cx="200" cy="200" r="192" fill="none" stroke="#34d399" strokeWidth="0.8" />
+              <line x1="200" y1="0" x2="200" y2="400" stroke="#34d399" strokeWidth="0.6" strokeDasharray="4 6" />
+              <line x1="0" y1="200" x2="400" y2="200" stroke="#34d399" strokeWidth="0.6" strokeDasharray="4 6" />
+            </svg>
+            {/* CRT Corner Bezel Vignette */}
+            <div className="absolute inset-0 shadow-[inset_0_0_48px_rgba(0,0,0,0.85)]" />
+          </div>
+
           {/* Floating Map Legend */}
-          <div className="pointer-events-none absolute bottom-3 left-3 z-[400] rounded-md bg-slate-950/90 border border-slate-700/80 px-2.5 py-1.5 flex items-center gap-3 text-[10px] font-tech text-slate-300">
+          <div className="pointer-events-none absolute bottom-3 left-3 z-[400] bakelite-surface px-2.5 py-1.5 flex items-center gap-3 text-[10px] font-tech text-stone-200">
             <span className="flex items-center gap-1">
-              <Navigation className="w-3 h-3 text-sky-400" aria-hidden="true" />
+              <Navigation className="w-3 h-3 text-emerald-400" aria-hidden="true" />
               Poziție live
             </span>
             {activeDestination && (
@@ -391,26 +427,26 @@ export const GpsRadarView: React.FC<GpsRadarViewProps> = ({
         </div>
       </div>
 
-      {/* Final Arrival Confirmation */}
+      {/* Final Arrival Confirmation Switch */}
       {(module7Solved || activeDestination?.id === 5) && (
-        <div className="hw-chassis rounded-xl p-4 border-amber-500/50">
+        <div className="chassis-plate metal-micrograin p-3.5">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <div>
-              <p className="font-tech text-[11px] text-amber-400">
+              <p className="font-tech text-[11px] font-bold text-amber-300">
                 {isNearFinal
-                  ? 'EȘTI ÎN PERIMETRUL OBIECTIVULUI FINAL!'
-                  : 'TOATE CELE 7 MODULE AU FOST DEZAMORSATE'}
+                  ? 'PERIMETRU ATINS — CONFIRMARE DISPONIBILĂ'
+                  : 'TOATE MODULELE NEUTRALIZATE (7/7)'}
               </p>
-              <p className="text-xs text-slate-300 mt-0.5">
-                Când ajungi la destinația finală din Sinaia, confirmă sosirea mai jos.
+              <p className="font-tech text-[11px] text-stone-400 mt-0.5">
+                Confirmă sosirea la obiectivul final din Sinaia.
               </p>
             </div>
             <button
               type="button"
               onClick={onConfirmFinalArrival}
-              className="hw-tactile-btn w-full sm:w-auto px-4 py-3 min-h-[48px] flex items-center justify-center gap-2 font-display text-xs font-bold tracking-wider text-amber-300 border-amber-500/60"
+              className="mech-key w-full sm:w-auto px-4 py-3 min-h-[48px] flex items-center justify-center gap-2 font-display text-xs font-bold tracking-wider text-amber-200 cursor-pointer"
             >
-              <Flag className="w-4 h-4" aria-hidden="true" />
+              <Flag className="w-4 h-4 text-amber-400" aria-hidden="true" />
               <span>CONFIRMĂ SOSIREA LA OBIECTIVUL FINAL</span>
             </button>
           </div>

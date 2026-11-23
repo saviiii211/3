@@ -11,9 +11,9 @@ export const WhosOnFirstModule: React.FC<WhosOnFirstModuleProps> = ({
   onPressButton,
 }) => {
   return (
-    <div className="hw-carbon-bay rounded-lg p-3.5 border border-slate-800/90">
-      <div className="flex items-center justify-between mb-2.5">
-        <span className="font-tech text-[10px] text-slate-400 tracking-wider">
+    <div className="recessed-bay p-3">
+      <div className="flex items-center justify-between mb-2">
+        <span className="font-tech text-[10px] text-stone-400 tracking-widest">
           RUNDA {state.round} / 3
         </span>
         <div className="flex items-center gap-1.5" aria-label={`Runda ${state.round} din 3`}>
@@ -28,17 +28,17 @@ export const WhosOnFirstModule: React.FC<WhosOnFirstModuleProps> = ({
         </div>
       </div>
 
-      {/* Upper OLED Display */}
-      <div className="hw-lcd-screen rounded-lg py-4 px-3 mb-3 flex items-center justify-center min-h-[68px]">
+      {/* Industrial Phosphor-Green CRT Screen */}
+      <div className="crt-phosphor-glass py-4 px-3 mb-3 flex items-center justify-center min-h-[66px]">
         <span
           data-testid="wof-display"
-          className="font-lcd text-2xl sm:text-3xl tracking-widest text-emerald-300 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]"
+          className="font-lcd text-2xl sm:text-3xl tracking-widest phosphor-text relative z-10"
         >
           {state.displayWord === '' ? '\u00A0' : state.displayWord}
         </span>
       </div>
 
-      {/* 3 rows x 2 columns backlit mechanical buttons */}
+      {/* 3 rows x 2 columns bakelite push-buttons */}
       <div className="grid grid-cols-2 gap-2.5">
         {state.buttons.map((label, idx) => (
           <button
@@ -46,9 +46,9 @@ export const WhosOnFirstModule: React.FC<WhosOnFirstModuleProps> = ({
             type="button"
             onClick={() => onPressButton(idx)}
             aria-label={`Buton ${idx + 1}: ${label}`}
-            className="hw-tactile-btn min-h-[48px] px-2 py-2.5 flex items-center justify-center"
+            className="mech-key-bakelite min-h-[46px] px-2 py-2.5 flex items-center justify-center cursor-pointer"
           >
-            <span className="font-tech text-sm font-bold tracking-wider text-amber-200 whitespace-nowrap">
+            <span className="font-tech text-sm font-bold tracking-wider text-amber-100 whitespace-nowrap">
               {label}
             </span>
           </button>

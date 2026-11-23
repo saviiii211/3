@@ -8,17 +8,17 @@ interface MemoryModuleProps {
 
 export const MemoryModule: React.FC<MemoryModuleProps> = ({ state, onPress }) => {
   return (
-    <div className="hw-carbon-bay rounded-lg p-3.5 border border-slate-800/90">
+    <div className="recessed-bay p-3">
       <div className="flex items-stretch gap-3">
-        {/* Left: LCD Display + 4 Physical Tactile Keys */}
+        {/* Left: Recessed Phosphor CRT Display + 4 Heavy Mechanical Keys */}
         <div className="flex-1 flex flex-col gap-3">
-          <div className="hw-lcd-screen rounded-lg py-4 px-3 flex flex-col items-center justify-center">
-            <span className="font-tech text-[10px] tracking-widest text-sky-400/70 mb-0.5">
+          <div className="crt-amber-glass py-4 px-3 flex flex-col items-center justify-center">
+            <span className="font-tech text-[10px] tracking-[0.2em] text-amber-400/80 mb-0.5 relative z-10">
               ETAPA {state.stage} / 5
             </span>
             <div
               data-testid="memory-display"
-              className="font-lcd text-6xl leading-none text-sky-300 drop-shadow-[0_0_12px_rgba(56,189,248,0.6)] select-none"
+              className="font-lcd text-6xl leading-none nixie-tube select-none relative z-10"
             >
               {state.display}
             </div>
@@ -33,20 +33,20 @@ export const MemoryModule: React.FC<MemoryModuleProps> = ({ state, onPress }) =>
                   type="button"
                   onClick={() => onPress(pos)}
                   aria-label={`Memoria poziția ${pos}, cifra ${label}`}
-                  className="hw-tactile-btn min-h-[56px] flex flex-col items-center justify-center py-2 px-1"
+                  className="mech-key min-h-[54px] flex flex-col items-center justify-center py-2 px-1 cursor-pointer"
                 >
-                  <span className="font-lcd text-2xl font-bold text-amber-300">{label}</span>
-                  <span className="font-tech text-[9px] text-slate-400 mt-0.5">P{pos}</span>
+                  <span className="font-lcd text-2xl font-bold text-amber-200">{label}</span>
+                  <span className="font-tech text-[9px] text-stone-400 mt-0.5">P{pos}</span>
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* Right: Vertical 5-Stage Progress LED Column */}
+        {/* Right: Vertical 5-Stage Glass Indicator Rack */}
         <div
           aria-label={`Progres etape Memoria: ${state.stage} din 5`}
-          className="w-10 rounded-lg bg-slate-950/90 border border-slate-800 py-2.5 flex flex-col-reverse items-center justify-between"
+          className="w-10 bakelite-surface py-2.5 flex flex-col-reverse items-center justify-between"
         >
           {[1, 2, 3, 4, 5].map((lvl) => {
             const passed = lvl < state.stage;
@@ -58,7 +58,7 @@ export const MemoryModule: React.FC<MemoryModuleProps> = ({ state, onPress }) =>
                     passed ? 'hw-led-green' : current ? 'hw-led-amber' : 'hw-led-off'
                   }`}
                 />
-                <span className="font-tech text-[8px] text-slate-500">{lvl}</span>
+                <span className="font-tech text-[8px] text-stone-400">{lvl}</span>
               </div>
             );
           })}

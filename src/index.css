@@ -1,13 +1,34 @@
 @import "tailwindcss";
 
 :root {
-  --hw-bg-chassis: #13171e;
-  --hw-bg-recess: #0b0e13;
-  --hw-border-steel: #2c3543;
-  --hw-amber: #f59e0b;
-  --hw-emerald: #10b981;
-  --hw-crimson: #ef4444;
-  --hw-sky: #38bdf8;
+  --bench-bg: #0b0a09;
+  --steel-top: #26292d;
+  --steel-mid: #1a1d20;
+  --steel-bot: #111315;
+  --bakelite: #101012;
+  --brass-hi: #8c6f3e;
+  --brass-mid: #614b26;
+  --brass-lo: #3b2d15;
+  --phosphor-green: #6ee7b7;
+  --nixie-amber: #ff9824;
+  --nixie-red: #ff4518;
+  --tension-heat: 0;
+  --alert-pulse-speed: 1.15s;
+}
+
+[data-tension="1"] {
+  --tension-heat: 0.25;
+  --alert-pulse-speed: 0.88s;
+}
+
+[data-tension="2"] {
+  --tension-heat: 0.55;
+  --alert-pulse-speed: 0.62s;
+}
+
+[data-tension="3"] {
+  --tension-heat: 0.9;
+  --alert-pulse-speed: 0.42s;
 }
 
 * {
@@ -16,8 +37,8 @@
 
 html,
 body {
-  background-color: #090c10;
-  color: #e2e8f0;
+  background-color: #090908;
+  color: #e5e2dc;
   font-family: 'Chakra Petch', system-ui, sans-serif;
   overscroll-behavior-y: contain;
 }
@@ -28,6 +49,7 @@ body {
 
 .font-lcd {
   font-family: 'Share Tech Mono', monospace;
+  font-variant-numeric: tabular-nums;
 }
 
 .font-tech {
@@ -35,12 +57,79 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Brushed steel + carbon fiber tactical chassis */
-.hw-chassis-bg {
-  background-color: #0e1218;
+/* ============================================================================
+   WORKBENCH ENVIRONMENT & TOP-LEFT DIRECTIONAL LIGHTING
+   ============================================================================ */
+.workbench-bg {
+  background-color: #0b0a09;
   background-image:
-    radial-gradient(circle at 18% 0%, rgba(56, 189, 248, 0.06), transparent 42%),
-    radial-gradient(circle at 82% 100%, rgba(245, 158, 11, 0.05), transparent 44%),
+    radial-gradient(ellipse 90% 65% at 18% 12%, rgba(255, 224, 178, 0.085), transparent 62%),
+    radial-gradient(ellipse 75% 70% at 85% 90%, rgba(0, 0, 0, 0.85), transparent 70%),
+    radial-gradient(circle at 50% 50%, rgba(168, 42, 18, calc(0.06 * var(--tension-heat))), transparent 72%),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.012) 0px,
+      rgba(255, 255, 255, 0.012) 1px,
+      transparent 1px,
+      transparent 6px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.28) 0px,
+      rgba(0, 0, 0, 0.28) 2px,
+      transparent 2px,
+      transparent 48px
+    );
+}
+
+/* Fine powder-coat / brushed metal micro-grain */
+.metal-micrograin {
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 0),
+    radial-gradient(rgba(0, 0, 0, 0.35) 1px, transparent 0);
+  background-size: 5px 5px, 3px 3px;
+  background-position: 0 0, 2px 1px;
+}
+
+/* Heavy beveled electrostatic-painted steel chassis plate (sharp 3px machined corners) */
+.chassis-plate {
+  background:
+    linear-gradient(140deg, rgba(255, 255, 255, 0.065) 0%, transparent 36%, rgba(0, 0, 0, 0.32) 100%),
+    linear-gradient(170deg, var(--steel-top) 0%, var(--steel-mid) 48%, var(--steel-bot) 100%);
+  border-radius: 3px;
+  border-top: 2px solid #444950;
+  border-left: 2px solid #3c4148;
+  border-right: 2px solid #121417;
+  border-bottom: 2px solid #0b0c0e;
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.08),
+    inset -2px -2px 0 rgba(0, 0, 0, 0.72),
+    8px 14px 28px rgba(0, 0, 0, 0.78);
+}
+
+/* Deep recessed metal compartment bay with dark rubber gasket rim */
+.recessed-bay {
+  background:
+    radial-gradient(
+      circle at 50% 45%,
+      rgba(155, 38, 15, calc(0.11 * var(--tension-heat))),
+      transparent 75%
+    ),
+    linear-gradient(160deg, #0d0e10 0%, #141619 55%, #090a0b 100%);
+  border-radius: 2px;
+  border: 2px solid #090a0c;
+  outline: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 4px 6px 16px rgba(0, 0, 0, 0.94),
+    inset -2px -2px 8px rgba(255, 255, 255, 0.03),
+    0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+/* Carbon / Bakelite ribbed sub-plate */
+.bakelite-surface {
+  background-color: #101113;
+  background-image:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.04) 0%, transparent 45%),
     repeating-linear-gradient(
       90deg,
       rgba(255, 255, 255, 0.015) 0px,
@@ -48,191 +137,300 @@ body {
       transparent 1px,
       transparent 4px
     );
-}
-
-.hw-chassis {
-  background: linear-gradient(165deg, #1d232d 0%, #141922 52%, #0f131a 100%);
-  border: 1px solid #2d3645;
+  border-radius: 2px;
+  border-top: 1px solid #2c2f34;
+  border-left: 1px solid #26292d;
+  border-right: 1px solid #070809;
+  border-bottom: 1px solid #050506;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.09),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.65),
-    0 12px 28px rgba(0, 0, 0, 0.55);
+    inset 0 2px 8px rgba(0, 0, 0, 0.85),
+    2px 3px 8px rgba(0, 0, 0, 0.6);
 }
 
-.hw-carbon-bay {
-  background-color: #0c1016;
-  background-image:
-    linear-gradient(45deg, rgba(255, 255, 255, 0.025) 25%, transparent 25%),
-    linear-gradient(-45deg, rgba(255, 255, 255, 0.025) 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, rgba(0, 0, 0, 0.28) 75%),
-    linear-gradient(-45deg, transparent 75%, rgba(0, 0, 0, 0.28) 75%);
-  background-size: 8px 8px;
-  background-position: 0 0, 0 4px, 4px -4px, -4px 0;
+/* Oxidized brass engraved technical plaque */
+.brass-plaque {
+  background:
+    linear-gradient(135deg, rgba(255, 232, 185, 0.16) 0%, transparent 45%, rgba(0, 0, 0, 0.4) 100%),
+    linear-gradient(180deg, var(--brass-hi) 0%, var(--brass-mid) 52%, var(--brass-lo) 100%);
+  border-radius: 2px;
+  border-top: 1px solid #b59254;
+  border-left: 1px solid #9d7d45;
+  border-right: 1px solid #291f0e;
+  border-bottom: 1px solid #1e1609;
   box-shadow:
-    inset 0 3px 10px rgba(0, 0, 0, 0.85),
-    0 1px 0 rgba(255, 255, 255, 0.06);
+    inset 0 1px 0 rgba(255, 240, 200, 0.25),
+    2px 3px 6px rgba(0, 0, 0, 0.72);
+  text-shadow: 0 1px 0 rgba(255, 235, 190, 0.18), 0 -1px 0 rgba(0, 0, 0, 0.8);
 }
 
-/* Engraved metallic nameplate */
-.hw-nameplate {
-  background: linear-gradient(180deg, #333c4b 0%, #202733 50%, #191f29 100%);
-  border: 1px solid #485468;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.22),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.6),
-    0 2px 6px rgba(0, 0, 0, 0.5);
-  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.85), 0 1px 0 rgba(255, 255, 255, 0.12);
-}
-
-/* LCD / OLED screen with fine scanlines */
-.hw-lcd-screen {
+/* Recessed CRT / Oscilloscope Phosphor Glass */
+.crt-phosphor-glass {
   position: relative;
-  background: linear-gradient(180deg, #061318 0%, #091d24 100%);
-  border: 2px solid #263140;
+  background:
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(15, 58, 38, 0.95) 0%,
+      rgba(7, 29, 20, 0.98) 68%,
+      #030f0a 100%
+    );
+  border-radius: 2px;
+  border-top: 2px solid #070908;
+  border-left: 2px solid #070908;
+  border-right: 2px solid #2b332e;
+  border-bottom: 2px solid #303833;
   box-shadow:
-    inset 0 4px 12px rgba(0, 0, 0, 0.9),
-    inset 0 0 18px rgba(56, 189, 248, 0.12),
+    inset 4px 6px 18px rgba(0, 0, 0, 0.95),
+    inset 0 0 24px rgba(52, 211, 153, 0.12),
     0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
-.hw-lcd-screen::after {
+.crt-phosphor-glass::before {
   content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: repeating-linear-gradient(
-    0deg,
-    rgba(0, 0, 0, 0.22) 0px,
-    rgba(0, 0, 0, 0.22) 1px,
-    transparent 1px,
-    transparent 3px
-  );
-  border-radius: inherit;
+  background:
+    linear-gradient(128deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 26%, transparent 48%),
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.26) 0px,
+      rgba(0, 0, 0, 0.26) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+  z-index: 5;
 }
 
-.hw-phosphor-screen {
+/* Warm Amber/Red CRT / Nixie Tube Housing */
+.crt-amber-glass {
   position: relative;
-  background: radial-gradient(circle at center, #082419 0%, #04130d 100%);
-  border: 2px solid #1e3a2f;
+  background:
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(42, 22, 8, 0.95) 0%,
+      rgba(22, 11, 4, 0.98) 70%,
+      #0c0602 100%
+    );
+  border-radius: 2px;
+  border-top: 2px solid #070504;
+  border-left: 2px solid #070504;
+  border-right: 2px solid #332920;
+  border-bottom: 2px solid #382c22;
   box-shadow:
-    inset 0 4px 14px rgba(0, 0, 0, 0.92),
-    inset 0 0 22px rgba(16, 185, 129, 0.14);
+    inset 4px 6px 16px rgba(0, 0, 0, 0.95),
+    inset 0 0 22px rgba(255, 130, 30, calc(0.14 + 0.14 * var(--tension-heat))),
+    0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
-.hw-phosphor-screen::after {
+.crt-amber-glass::before {
   content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: repeating-linear-gradient(
-    0deg,
-    rgba(0, 0, 0, 0.24) 0px,
-    rgba(0, 0, 0, 0.24) 1px,
-    transparent 1px,
-    transparent 3px
-  );
-  border-radius: inherit;
+  background:
+    linear-gradient(128deg, rgba(255, 240, 215, 0.07) 0%, transparent 44%),
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.25) 0px,
+      rgba(0, 0, 0, 0.25) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+  z-index: 5;
 }
 
-/* 3D Tactile recessed physical push-buttons */
-.hw-tactile-btn {
-  background: linear-gradient(180deg, #2a3342 0%, #1d2430 100%);
-  border: 1px solid #3f4c61;
-  border-radius: 0.65rem;
+.nixie-tube {
+  color: #ff9c2a;
+  text-shadow:
+    0 0 6px rgba(255, 120, 20, 0.85),
+    0 0 16px rgba(255, 72, 16, calc(0.45 + 0.35 * var(--tension-heat)));
+}
+
+.nixie-tube-red {
+  color: #ff5938;
+  text-shadow:
+    0 0 7px rgba(255, 65, 35, 0.9),
+    0 0 18px rgba(220, 38, 38, 0.55);
+}
+
+.phosphor-text {
+  color: #7bf1a8;
+  text-shadow: 0 0 8px rgba(52, 211, 153, 0.55);
+}
+
+/* ============================================================================
+   MECHANICAL SWITCHES, KEYS & BEZELS (HIGH TRAVEL, DIRECTIONAL SHADOWS)
+   ============================================================================ */
+.mech-key {
+  position: relative;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.09) 0%, transparent 50%),
+    linear-gradient(180deg, #2c3036 0%, #1d2024 85%, #16181b 100%);
+  border-radius: 2px;
+  border-top: 2px solid #4d535c;
+  border-left: 2px solid #424750;
+  border-right: 2px solid #0e1012;
+  border-bottom: 2px solid #090a0c;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.15),
-    0 4px 0 #0b0e14,
-    0 6px 12px rgba(0, 0, 0, 0.5);
-  transition: transform 90ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 90ms cubic-bezier(0.16, 1, 0.3, 1), background 150ms ease;
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    2px 4px 0 #08090b,
+    4px 7px 12px rgba(0, 0, 0, 0.72);
+  transition: transform 80ms linear, box-shadow 80ms linear, background 120ms linear;
 }
 
-.hw-tactile-btn:hover:not(:disabled) {
-  background: linear-gradient(180deg, #323c4e 0%, #232b39 100%);
-  border-color: #52627b;
+.mech-key:hover:not(:disabled) {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.13) 0%, transparent 50%),
+    linear-gradient(180deg, #353a41 0%, #23272c 100%);
 }
 
-.hw-tactile-btn:active:not(:disabled) {
-  transform: translateY(3px);
+.mech-key:active:not(:disabled) {
+  transform: translate(1px, 3px);
   box-shadow:
-    inset 0 2px 4px rgba(0, 0, 0, 0.55),
-    0 1px 0 #0b0e14,
-    0 2px 4px rgba(0, 0, 0, 0.4);
+    inset 2px 3px 6px rgba(0, 0, 0, 0.72),
+    1px 1px 0 #08090b,
+    1px 2px 4px rgba(0, 0, 0, 0.6);
 }
 
-.hw-btn-compact {
-  background: linear-gradient(180deg, #262f3d 0%, #19202b 100%);
-  border: 1px solid #394558;
-  border-radius: 0.5rem;
+.mech-key-bakelite {
+  position: relative;
+  background:
+    linear-gradient(145deg, rgba(255, 248, 235, 0.08) 0%, transparent 45%),
+    linear-gradient(180deg, #212022 0%, #131214 90%, #0b0b0c 100%);
+  border-radius: 2px;
+  border-top: 2px solid #3d3b3e;
+  border-left: 2px solid #323033;
+  border-right: 2px solid #070708;
+  border-bottom: 2px solid #040405;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 2px 0 #0a0d12;
-  transition: transform 90ms ease, background 150ms ease;
+    inset 0 1px 0 rgba(255, 255, 255, 0.11),
+    2px 4px 0 #060607,
+    3px 6px 10px rgba(0, 0, 0, 0.78);
+  transition: transform 80ms linear, box-shadow 80ms linear;
 }
 
-.hw-btn-compact:active:not(:disabled) {
-  transform: translateY(1.5px);
+.mech-key-bakelite:active:not(:disabled) {
+  transform: translate(1px, 3px);
+  box-shadow:
+    inset 2px 3px 6px rgba(0, 0, 0, 0.8),
+    0 1px 0 #060607;
 }
 
-/* Caution hazard stripe border */
+.mech-toggle {
+  background: linear-gradient(180deg, #26292e 0%, #17191c 100%);
+  border-radius: 2px;
+  border-top: 1px solid #444a52;
+  border-left: 1px solid #3a3f46;
+  border-right: 1px solid #0d0e10;
+  border-bottom: 1px solid #070809;
+  box-shadow: 2px 3px 0 #08090a, 3px 5px 8px rgba(0, 0, 0, 0.65);
+  transition: transform 80ms linear, background 120ms linear;
+}
+
+.mech-toggle:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #08090a;
+}
+
+/* Industrial hazard caution strip */
 .hw-hazard-stripe {
   background: repeating-linear-gradient(
     -45deg,
-    #f59e0b,
-    #f59e0b 8px,
-    #111827 8px,
-    #111827 16px
+    #c98212,
+    #c98212 8px,
+    #111214 8px,
+    #111214 16px
   );
+  border-radius: 2px;
 }
 
-/* Glass dome LEDs */
+/* ============================================================================
+   GLASS INDICATOR BULBS / LEDs IN MACHINED COLLARS
+   ============================================================================ */
 .hw-led-dome {
   position: relative;
   border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: inset 0 -2px 3px rgba(0, 0, 0, 0.65);
+  border: 2px solid #2b2e33;
+  box-shadow:
+    inset 0 -2px 4px rgba(0, 0, 0, 0.75),
+    1px 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 .hw-led-dome::after {
   content: '';
   position: absolute;
   top: 18%;
-  left: 22%;
+  left: 20%;
   width: 34%;
-  height: 26%;
+  height: 24%;
   border-radius: 9999px;
   background: rgba(255, 255, 255, 0.55);
-  transform: rotate(-25deg);
+  transform: rotate(-28deg);
 }
 
 .hw-led-off {
-  background: radial-gradient(circle at 35% 35%, #374151 0%, #111827 80%);
+  background: radial-gradient(circle at 35% 35%, #2f3338 0%, #121315 80%);
 }
 
 .hw-led-red-pulse {
-  background: radial-gradient(circle at 35% 35%, #fca5a5 0%, #ef4444 45%, #7f1d1d 100%);
-  box-shadow: 0 0 12px rgba(239, 68, 68, 0.85), inset 0 -2px 3px rgba(0, 0, 0, 0.5);
-  animation: led-pulse-red 1s ease-in-out infinite;
+  background: radial-gradient(circle at 35% 35%, #fecaca 0%, #dc2626 48%, #450a0a 100%);
+  box-shadow:
+    0 0 10px rgba(220, 38, 38, 0.85),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.5),
+    1px 2px 4px rgba(0, 0, 0, 0.8);
+  animation: led-pulse-red var(--alert-pulse-speed) ease-in-out infinite;
 }
 
 .hw-led-green {
-  background: radial-gradient(circle at 35% 35%, #a7f3d0 0%, #10b981 45%, #064e3b 100%);
-  box-shadow: 0 0 14px rgba(16, 185, 129, 0.9), inset 0 -2px 3px rgba(0, 0, 0, 0.45);
+  background: radial-gradient(circle at 35% 35%, #d1fae5 0%, #10b981 48%, #042f22 100%);
+  box-shadow:
+    0 0 12px rgba(16, 185, 129, 0.85),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.45),
+    1px 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 .hw-led-amber {
-  background: radial-gradient(circle at 35% 35%, #fde68a 0%, #f59e0b 48%, #78350f 100%);
-  box-shadow: 0 0 10px rgba(245, 158, 11, 0.8), inset 0 -2px 3px rgba(0, 0, 0, 0.45);
+  background: radial-gradient(circle at 35% 35%, #fef3c7 0%, #d97706 50%, #451a03 100%);
+  box-shadow:
+    0 0 10px rgba(217, 119, 6, 0.8),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.45),
+    1px 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 @keyframes led-pulse-red {
   0%, 100% {
     opacity: 1;
-    box-shadow: 0 0 14px rgba(239, 68, 68, 0.95);
+    box-shadow: 0 0 12px rgba(220, 38, 38, 0.95);
   }
   50% {
-    opacity: 0.55;
-    box-shadow: 0 0 5px rgba(239, 68, 68, 0.45);
+    opacity: 0.48;
+    box-shadow: 0 0 4px rgba(220, 38, 38, 0.35);
   }
+}
+
+/* ============================================================================
+   3D BOMB STAGE & MOTION ANIMATIONS
+   ============================================================================ */
+.bomb-stage-perspective {
+  perspective: 1450px;
+  perspective-origin: 50% 48%;
+  isolation: isolate;
+}
+
+.bomb-3d-assembly {
+  transform-style: preserve-3d;
+  transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.bomb-3d-assembly.is-dragging {
+  transition: none;
+}
+
+.bomb-face {
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  outline: 1px solid rgba(255, 240, 210, 0.08);
 }
 
 @keyframes hw-shake {
@@ -272,31 +470,55 @@ body {
   animation: radar-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 
+@keyframes radar-sweep {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.radar-sweep-beam {
+  background: conic-gradient(
+    from 0deg,
+    rgba(52, 211, 153, 0.24) 0deg,
+    rgba(52, 211, 153, 0.08) 38deg,
+    transparent 76deg,
+    transparent 360deg
+  );
+  animation: radar-sweep 4.2s linear infinite;
+}
+
 /* Leaflet Dark Radar overrides */
 .leaflet-container {
-  background: #070b10 !important;
-  font-family: 'Chakra Petch', sans-serif !important;
+  background: #060a08 !important;
+  font-family: 'JetBrains Mono', monospace !important;
 }
 
 .leaflet-dark-tiles .leaflet-tile-pane {
-  filter: invert(100%) hue-rotate(180deg) brightness(92%) contrast(92%) saturate(65%);
+  filter: invert(100%) hue-rotate(180deg) brightness(90%) contrast(94%) saturate(55%);
 }
 
 .leaflet-control-attribution {
-  background: rgba(11, 14, 19, 0.78) !important;
-  color: #64748b !important;
+  background: rgba(11, 12, 13, 0.84) !important;
+  color: #6b7280 !important;
   font-size: 9px !important;
 }
 
 .leaflet-control-attribution a {
-  color: #94a3b8 !important;
+  color: #9ca3af !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .animate-hw-shake,
   .animate-strike-flash,
   .animate-radar-ping,
-  .hw-led-red-pulse {
+  .hw-led-red-pulse,
+  .radar-sweep-beam {
     animation: none !important;
+  }
+  .bomb-3d-assembly {
+    transition: none !important;
   }
 }

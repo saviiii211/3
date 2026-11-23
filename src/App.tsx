@@ -1,19 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Cpu, Map as MapIcon, ShieldAlert, Terminal, Volume2, VolumeX } from 'lucide-react';
+import { Box, Compass, Volume2, VolumeX } from 'lucide-react';
 import { AdminModal } from './components/AdminModal';
+import { Bomb3DScene } from './components/Bomb3DScene';
 import { CasingSpecsView } from './components/CasingSpecsView';
 import { GpsRadarView } from './components/GpsRadarView';
-import { ModuleCardShell } from './components/ModuleCardShell';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { PWAInstallButton } from './components/PWAInstallButton';
 import { VictoryScreen } from './components/VictoryScreen';
-import { KnobsModule } from './components/modules/KnobsModule';
-import { MazesModule } from './components/modules/MazesModule';
-import { MemoryModule } from './components/modules/MemoryModule';
-import { PasswordsModule } from './components/modules/PasswordsModule';
-import { WhosOnFirstModule } from './components/modules/WhosOnFirstModule';
-import { WireSequencesModule } from './components/modules/WireSequencesModule';
-import { ComplicatedWiresModule } from './components/modules/ComplicatedWiresModule';
 import { cutComplicatedWire } from './game/complicatedWires';
 import { isKnobAlignedCorrectly, rotateClockwise } from './game/knobs';
 import { moveMazePlayer, type MazeDirection } from './game/mazes';
@@ -21,22 +14,42 @@ import { pressMemoryButton } from './game/memory';
 import {
   createInitialMissionState,
   getActiveDestination,
-  getModuleStatus,
   isGpsUnlocked,
   loadMissionState,
   markModuleSolved,
-  MISSION_MODULES,
   saveMissionState,
 } from './game/missionState';
 import { checkPasswordSubmit, stepPasswordColumn } from './game/passwords';
-import type { AppTab, ModuleId, PersistedMissionState } from './game/types';
+import type { ModuleId, PersistedMissionState } from './game/types';
 import { pressWhosOnFirstButton } from './game/whosOnFirst';
 import { cutSequenceWire, navigateSequencePanel } from './game/wireSequences';
 import { soundEngine, triggerHaptic } from './utils/sound';
 
+const TIMER_STORAGE_KEY = 'op3ani_elapsed_seconds_v1';
+
+function loadElapsedSeconds(): number {
+  if (typeof window === 'undefined') return 0;
+  try {
+    const raw = window.localStorage.getItem(TIMER_STORAGE_KEY);
+    const parsed = raw ? Number(raw) : 0;
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function formatNixieTimer(totalSec: number): string {
+  const mins = Math.floor(totalSec / 60);
+  const secs = totalSec % 60;
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
 export default function App() {
   const [state, setState] = useState<PersistedMissionState>(() => loadMissionState());
-  const [activeTab, setActiveTab] = useState<AppTab>('console');
+  const [activeView, setActiveView] = useState<'console' | 'gps'>('console');
+  const [focusedModuleId, setFocusedModuleId] = useState<ModuleId | null>(null);
+  const [loupeOpen, setLoupeOpen] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState<number>(() => loadElapsedSeconds());
   const [shaking, setShaking] = useState(false);
   const [strikeFlash, setStrikeFlash] = useState(false);
   const [strikeModuleId, setStrikeModuleId] = useState<ModuleId | null>(null);
@@ -57,6 +70,23 @@ export default function App() {
     saveMissionState(state);
   }, [state]);
 
+  // Mission Nixie telemetry timer (ticks until neutralized)
+  useEffect(() => {
+    if (state.victory) return;
+    const id = window.setInterval(() => {
+      setElapsedSeconds((prev) => {
+        const next = prev + 1;
+        try {
+          window.localStorage.setItem(TIMER_STORAGE_KEY, String(next));
+        } catch {
+          // ignore
+        }
+        return next;
+      });
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [state.victory]);
+
   const showToast = useCallback(
     (text: string, tone: 'info' | 'success' | 'error' = 'info') => {
       setToast({ text, tone });
@@ -65,7 +95,7 @@ export default function App() {
       }
       toastTimerRef.current = window.setTimeout(() => {
         setToast(null);
-      }, 3400);
+      }, 3200);
     },
     []
   );
@@ -94,14 +124,14 @@ export default function App() {
 
       if (moduleId === 1) {
         window.setTimeout(() => soundEngine.playRadarPing(), 320);
-        showToast('MODUL 1 DEZAMORSAT — SEMNAL GPS INIȚIALIZAT!', 'success');
+        showToast('MOD-01 DEZAMORSAT — SEMNAL GPS INIȚIALIZAT', 'success');
       } else if (moduleId === 2) {
-        showToast('MODUL 2 DEZAMORSAT — Unitate pregătită pentru Sinaia!', 'success');
+        showToast('MOD-02 DEZAMORSAT — TRANZIT VALIDAT', 'success');
       } else if (moduleId >= 3 && moduleId <= 7) {
         window.setTimeout(() => soundEngine.playRadarPing(), 320);
         const destNum = moduleId - 2;
         showToast(
-          `DECRIPTARE REUȘITĂ — Rută trasată către OBIECTIV CRIPTAT #${destNum}`,
+          `DECRIPTARE REUȘITĂ — OBIECTIV CRIPTAT #${destNum}`,
           'success'
         );
       }
@@ -109,8 +139,8 @@ export default function App() {
     [showToast]
   );
 
-  // Secret 5-tap trigger on mission nameplate
-  const handleTitleTap = () => {
+  // Secret 5-tap trigger on the main Nixie telemetry timer housing
+  const handleTelemetryTap = () => {
     tapCountRef.current += 1;
     if (tapTimerRef.current) {
       window.clearTimeout(tapTimerRef.current);
@@ -135,7 +165,7 @@ export default function App() {
         strikes: prev.strikes + 1,
         memory: res.nextState,
       }));
-      registerStrike(1, 'Greșeală la Memoria! Resetare la Etapa 1.');
+      registerStrike(1, 'Eroare la Memoria! Resetare la Etapa 1.');
       return;
     }
     soundEngine.playClick();
@@ -320,7 +350,8 @@ export default function App() {
       forcedDestinationId: destId,
     }));
     if (destId !== null) {
-      setActiveTab('gps');
+      setActiveView('gps');
+      setFocusedModuleId(null);
       showToast(`ADMIN: Rută forțată către OBIECTIV CRIPTAT #${destId}`, 'info');
     }
   };
@@ -328,18 +359,28 @@ export default function App() {
   const handleAdminReset = () => {
     const fresh = createInitialMissionState();
     setState(fresh);
-    setActiveTab('console');
-    showToast('Misiune resetată complet.', 'info');
+    setFocusedModuleId(null);
+    setLoupeOpen(false);
+    setActiveView('console');
+    setElapsedSeconds(0);
+    try {
+      window.localStorage.setItem(TIMER_STORAGE_KEY, '0');
+    } catch {
+      // ignore
+    }
+    showToast('Unitate resetată.', 'info');
   };
 
   const gpsUnlocked = isGpsUnlocked(state);
   const activeDestination = getActiveDestination(state);
   const module2Solved = state.solvedModules.includes(2);
   const module7Solved = state.solvedModules.includes(7);
+  const tensionLevel = Math.min(3, state.strikes);
 
   return (
     <div
-      className={`hw-chassis-bg min-h-screen flex flex-col text-slate-100 pb-20 lg:pb-8 ${
+      data-tension={tensionLevel}
+      className={`workbench-bg min-h-screen flex flex-col text-stone-100 ${
         shaking ? 'animate-hw-shake' : ''
       }`}
     >
@@ -347,244 +388,170 @@ export default function App() {
       {strikeFlash && (
         <div
           aria-hidden="true"
-          className="pointer-events-none fixed inset-0 z-50 border-[8px] border-red-500/80 shadow-[inset_0_0_70px_rgba(239,68,68,0.65)] animate-strike-flash"
+          className="pointer-events-none fixed inset-0 z-[1280] border-[8px] border-red-600/80 shadow-[inset_0_0_80px_rgba(220,38,38,0.7)] animate-strike-flash"
         />
       )}
 
-      {/* Compact Sticky Hardware Top Bar */}
-      <header className="sticky top-0 z-30 h-14 bg-[#0c1016]/95 border-b border-slate-800 shadow-lg px-3 sm:px-6 flex items-center justify-between gap-2">
+      {/* Minimal Functional Telemetry Top Bar (Zero Titles / Zero Train Routes) */}
+      <header className="sticky top-0 z-30 h-14 bg-[#121315]/95 border-b-2 border-black shadow-[0_6px_18px_rgba(0,0,0,0.85)] px-2.5 sm:px-5 flex items-center justify-between gap-2">
+        {/* Left: Main Nixie/LED Telemetry Timer (5 quick taps opens Admin) */}
         <button
           type="button"
-          onClick={handleTitleTap}
-          aria-label="Operațiunea 3 Ani — emblemă consolă"
-          className="hw-nameplate rounded-md px-2.5 py-1.5 flex items-center gap-2 shrink-0 cursor-pointer select-none"
+          onClick={handleTelemetryTap}
+          aria-label="Cronometru principal telemetrie"
+          className="crt-amber-glass px-2.5 sm:px-3 py-1 flex items-center gap-2 shrink-0 cursor-pointer select-none min-h-[38px]"
         >
-          <span className="w-2 h-2 rounded-full bg-amber-400" aria-hidden="true" />
-          <span className="font-display text-xs sm:text-sm font-bold tracking-wider text-amber-300 whitespace-nowrap">
-            OPERAȚIUNEA 3 ANI
+          <span
+            aria-hidden="true"
+            className={`hw-led-dome w-2.5 h-2.5 relative z-10 ${
+              state.victory ? 'hw-led-green' : state.strikes > 0 ? 'hw-led-red-pulse' : 'hw-led-amber'
+            }`}
+          />
+          <span
+            className={`font-lcd text-lg sm:text-xl tracking-widest relative z-10 ${
+              state.strikes >= 2 ? 'nixie-tube-red' : 'nixie-tube'
+            }`}
+          >
+            {formatNixieTimer(elapsedSeconds)}
+          </span>
+          <span className="hidden md:inline font-tech text-[10px] text-amber-300/70 relative z-10">
+            {state.solvedModules.length}/7
           </span>
         </button>
 
-        {/* Desktop Primary Tabs */}
-        <nav aria-label="Navigare consolă" className="hidden lg:flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => {
-              soundEngine.playClick();
-              setActiveTab('console');
-            }}
-            className={`px-3.5 py-1.5 rounded-md font-display text-xs font-bold tracking-wider transition-colors whitespace-nowrap ${
-              activeTab === 'console'
-                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50'
-                : 'text-slate-400 hover:text-slate-100'
-            }`}
-          >
-            CONSOLĂ
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              soundEngine.playClick();
-              setActiveTab('gps');
-            }}
-            className={`px-3.5 py-1.5 rounded-md font-display text-xs font-bold tracking-wider transition-colors whitespace-nowrap ${
-              activeTab === 'gps'
-                ? 'bg-sky-500/20 text-sky-300 border border-sky-500/50'
-                : 'text-slate-400 hover:text-slate-100'
-            }`}
-          >
-            RADAR GPS
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              soundEngine.playClick();
-              setActiveTab('casing');
-            }}
-            className={`px-3.5 py-1.5 rounded-md font-display text-xs font-bold tracking-wider transition-colors whitespace-nowrap ${
-              activeTab === 'casing'
-                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50'
-                : 'text-slate-400 hover:text-slate-100'
-            }`}
-          >
-            CARCASĂ / DATE
-          </button>
-        </nav>
-
-        {/* Right Controls: Strikes, Mute, PWA Install */}
-        <div className="flex items-center gap-2 shrink-0">
+        {/* Center: Physical Strike Indicator Lamps & Console/GPS Switch */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Physical Strike Lamps + Counter */}
           <div
             data-testid="strike-counter"
             aria-label={`Greșeli totale: ${state.strikes}`}
-            className="hw-lcd-screen rounded px-2 py-1 flex items-center gap-1.5"
+            className="bakelite-surface px-2 py-1 flex items-center gap-1.5 shrink-0"
           >
-            <ShieldAlert
-              className={`w-3.5 h-3.5 ${state.strikes > 0 ? 'text-red-400' : 'text-slate-500'}`}
-              aria-hidden="true"
-            />
-            <span className="font-lcd text-sm text-red-400">{state.strikes}</span>
+            <div className="hidden sm:flex items-center gap-1" aria-hidden="true">
+              {[1, 2, 3].map((n) => (
+                <span
+                  key={n}
+                  className={`hw-led-dome w-2.5 h-2.5 ${
+                    state.strikes >= n ? 'hw-led-red-pulse' : 'hw-led-off'
+                  }`}
+                />
+              ))}
+            </div>
+            <span className="font-tech text-[10px] text-stone-400">ERR</span>
+            <span className="font-lcd text-base leading-none text-red-400">{state.strikes}</span>
           </div>
 
-          <PWAInstallButton />
+          {/* 3D Device / GPS Telemetry Switch */}
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                soundEngine.playClick();
+                setActiveView('console');
+              }}
+              className={`mech-toggle min-h-[38px] px-2.5 py-1 flex items-center gap-1.5 font-tech text-[11px] whitespace-nowrap cursor-pointer ${
+                activeView === 'console' ? 'text-amber-300 ring-1 ring-amber-500/60' : 'text-stone-400'
+              }`}
+            >
+              <Box className="w-3.5 h-3.5" aria-hidden="true" />
+              <span className="hidden xs:inline sm:inline">DISPOZITIV</span>
+            </button>
 
+            <button
+              type="button"
+              onClick={() => {
+                soundEngine.playClick();
+                setActiveView('gps');
+              }}
+              className={`mech-toggle min-h-[38px] px-2.5 py-1 flex items-center gap-1.5 font-tech text-[11px] whitespace-nowrap cursor-pointer ${
+                activeView === 'gps' ? 'text-emerald-300 ring-1 ring-emerald-500/60' : 'text-stone-400'
+              }`}
+            >
+              <span
+                aria-hidden="true"
+                className={`hw-led-dome w-2 h-2 ${
+                  activeDestination ? 'hw-led-green' : gpsUnlocked ? 'hw-led-amber' : 'hw-led-off'
+                }`}
+              />
+              <Compass className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>GPS</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Right: PWA Install + Discreet Audio Switch */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <PWAInstallButton />
           <button
             type="button"
             onClick={() => setState((prev) => ({ ...prev, muted: !prev.muted }))}
             aria-label={state.muted ? 'Activează sunetul' : 'Dezactivează sunetul'}
-            className="hw-btn-compact min-w-[40px] min-h-[36px] flex items-center justify-center text-slate-300 hover:text-white"
+            className="mech-toggle min-w-[40px] min-h-[38px] flex items-center justify-center text-stone-300 hover:text-white cursor-pointer"
           >
             {state.muted ? (
-              <VolumeX className="w-4 h-4 text-slate-500" aria-hidden="true" />
+              <VolumeX className="w-4 h-4 text-stone-500" aria-hidden="true" />
             ) : (
-              <Volume2 className="w-4 h-4 text-sky-300" aria-hidden="true" />
+              <Volume2 className="w-4 h-4 text-amber-300" aria-hidden="true" />
             )}
           </button>
         </div>
       </header>
 
-      {/* Non-blocking Floating Status Toast */}
+      {/* Non-blocking Bottom Hardware Status Toast */}
       {toast && (
         <div
           role="status"
           aria-live="polite"
-          className={`pointer-events-none fixed bottom-20 lg:bottom-5 left-1/2 -translate-x-1/2 z-[1100] w-[92%] max-w-md rounded-lg px-3.5 py-2.5 shadow-xl border font-tech text-xs text-center ${
+          className={`pointer-events-none fixed bottom-4 left-1/2 -translate-x-1/2 z-[1100] w-[92%] max-w-md px-3.5 py-2.5 shadow-2xl border-2 font-tech text-xs text-center ${
             toast.tone === 'error'
-              ? 'bg-red-950/95 border-red-500 text-red-200'
+              ? 'bg-red-950/95 border-red-600 text-red-100'
               : toast.tone === 'success'
-                ? 'bg-emerald-950/95 border-emerald-500 text-emerald-200'
-                : 'bg-slate-900/95 border-sky-500/60 text-sky-200'
+                ? 'bg-emerald-950/95 border-emerald-600 text-emerald-100'
+                : 'bakelite-surface border-amber-500/70 text-amber-100'
           }`}
         >
           {toast.text}
         </div>
       )}
 
-      {/* Main Content */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 pt-4">
-        {activeTab === 'console' && (
-          <div className="space-y-4">
-            {/* Mission Progress Strip */}
-            <div className="hw-chassis rounded-xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <div className="flex items-center gap-2 text-xs font-tech text-slate-400">
-                  <span>PROGRES MISIUNE</span>
-                  <span aria-hidden="true">·</span>
-                  <span className="text-amber-300 font-bold">
-                    {state.solvedModules.length} / 7 MODULE DEZAMORSATE
-                  </span>
-                </div>
-                <p className="text-xs text-slate-300 mt-1">
-                  {activeDestination
-                    ? `Rută activă: ${activeDestination.codeName}`
-                    : gpsUnlocked
-                      ? 'Semnal GPS deblocat · Continuă cu următorul modul.'
-                      : 'Dezamorsează Modulul 1 (Memoria) pentru a inițializa radarul GPS.'}
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1.5" aria-hidden="true">
-                  {MISSION_MODULES.map((m) => {
-                    const st = getModuleStatus(state, m.id);
-                    return (
-                      <div
-                        key={m.id}
-                        className={`w-6 h-2.5 rounded-sm border ${
-                          st === 'solved'
-                            ? 'bg-emerald-400 border-emerald-300 shadow-[0_0_8px_rgba(16,185,129,0.7)]'
-                            : st === 'active'
-                              ? 'bg-amber-400 border-amber-300'
-                              : 'bg-slate-900 border-slate-700'
-                        }`}
-                      />
-                    );
-                  })}
-                </div>
-                {gpsUnlocked && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundEngine.playClick();
-                      setActiveTab('gps');
-                    }}
-                    className="hw-btn-compact px-2.5 py-1.5 font-tech text-[11px] text-sky-300 whitespace-nowrap"
-                  >
-                    Deschide Hartă →
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Responsive Multi-Column Hardware Module Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-              {MISSION_MODULES.map((meta) => {
-                const status = getModuleStatus(state, meta.id);
-                const isStrike = strikeModuleId === meta.id;
-                const isJustSolved = justSolvedId === meta.id;
-
-                return (
-                  <ModuleCardShell
-                    key={meta.id}
-                    meta={meta}
-                    status={status}
-                    strikePulse={isStrike}
-                    justSolved={isJustSolved}
-                  >
-                    {meta.id === 1 && (
-                      <MemoryModule state={state.memory} onPress={handleMemoryPress} />
-                    )}
-                    {meta.id === 2 && (
-                      <ComplicatedWiresModule
-                        state={state.complicatedWires}
-                        onCutWire={handleCutComplicatedWire}
-                      />
-                    )}
-                    {meta.id === 3 && (
-                      <WhosOnFirstModule
-                        state={state.whosOnFirst}
-                        onPressButton={handleWhosOnFirstPress}
-                      />
-                    )}
-                    {meta.id === 4 && (
-                      <WireSequencesModule
-                        state={state.wireSequences}
-                        onCutWire={handleCutSeqWire}
-                        onNavigate={handleSeqNavigate}
-                      />
-                    )}
-                    {meta.id === 5 && (
-                      <MazesModule
-                        state={state.maze}
-                        wallFlash={mazeWallFlash}
-                        onMove={handleMazeMove}
-                      />
-                    )}
-                    {meta.id === 6 && (
-                      <KnobsModule
-                        state={state.knobs}
-                        isActive={status === 'active'}
-                        onRotate={handleKnobRotate}
-                        onValidate={handleKnobValidate}
-                        onTickTimer={handleKnobTick}
-                        onResetTimer={handleKnobResetTimer}
-                      />
-                    )}
-                    {meta.id === 7 && (
-                      <PasswordsModule
-                        state={state.passwords}
-                        onStepColumn={handlePasswordStep}
-                        onSubmit={handlePasswordSubmit}
-                      />
-                    )}
-                  </ModuleCardShell>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'gps' && (
-          <div className="max-w-3xl mx-auto">
+      {/* Main Workbench Stage */}
+      <main className="flex-1 flex flex-col min-h-0">
+        {activeView === 'console' ? (
+          <Bomb3DScene
+            state={state}
+            focusedModuleId={focusedModuleId}
+            strikeModuleId={strikeModuleId}
+            justSolvedId={justSolvedId}
+            mazeWallFlash={mazeWallFlash}
+            gpsUnlocked={gpsUnlocked}
+            activeDestCode={activeDestination?.codeName ?? null}
+            onFocusModule={(id) => {
+              soundEngine.playClick();
+              setFocusedModuleId(id);
+            }}
+            onOpenLoupe={() => {
+              soundEngine.playClick();
+              setLoupeOpen(true);
+            }}
+            onOpenGps={() => {
+              soundEngine.playClick();
+              setActiveView('gps');
+            }}
+            onMemoryPress={handleMemoryPress}
+            onCutComplicatedWire={handleCutComplicatedWire}
+            onWhosOnFirstPress={handleWhosOnFirstPress}
+            onCutSeqWire={handleCutSeqWire}
+            onSeqNavigate={handleSeqNavigate}
+            onMazeMove={handleMazeMove}
+            onKnobRotate={handleKnobRotate}
+            onKnobValidate={handleKnobValidate}
+            onKnobTickTimer={handleKnobTick}
+            onKnobResetTimer={handleKnobResetTimer}
+            onPasswordStep={handlePasswordStep}
+            onPasswordSubmit={handlePasswordSubmit}
+          />
+        ) : (
+          <div className="w-full max-w-3xl mx-auto px-3 sm:px-6 py-4">
             <GpsRadarView
               unlocked={gpsUnlocked}
               module2Solved={module2Solved}
@@ -595,67 +562,14 @@ export default function App() {
             />
           </div>
         )}
-
-        {activeTab === 'casing' && (
-          <div className="max-w-3xl mx-auto">
-            <CasingSpecsView casing={state.casing} />
-          </div>
-        )}
       </main>
 
-      {/* Mobile Bottom Hardware Tab Bar (<= 60px height, fits inside 15% cap with top bar) */}
-      <nav
-        aria-label="Bară de navigare principală"
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-30 h-15 bg-[#0c1016]/95 border-t border-slate-800 grid grid-cols-3 items-center px-2"
-      >
-        <button
-          type="button"
-          onClick={() => {
-            soundEngine.playClick();
-            setActiveTab('console');
-          }}
-          className={`flex flex-col items-center justify-center py-1.5 rounded-lg min-h-[44px] ${
-            activeTab === 'console' ? 'text-amber-300' : 'text-slate-400'
-          }`}
-        >
-          <Terminal className="w-5 h-5" aria-hidden="true" />
-          <span className="font-display text-[10px] font-bold tracking-wider mt-0.5">
-            CONSOLĂ
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            soundEngine.playClick();
-            setActiveTab('gps');
-          }}
-          className={`relative flex flex-col items-center justify-center py-1.5 rounded-lg min-h-[44px] ${
-            activeTab === 'gps' ? 'text-sky-300' : 'text-slate-400'
-          }`}
-        >
-          <MapIcon className="w-5 h-5" aria-hidden="true" />
-          <span className="font-display text-[10px] font-bold tracking-wider mt-0.5">
-            RADAR GPS
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            soundEngine.playClick();
-            setActiveTab('casing');
-          }}
-          className={`flex flex-col items-center justify-center py-1.5 rounded-lg min-h-[44px] ${
-            activeTab === 'casing' ? 'text-amber-300' : 'text-slate-400'
-          }`}
-        >
-          <Cpu className="w-5 h-5" aria-hidden="true" />
-          <span className="font-display text-[10px] font-bold tracking-wider mt-0.5">
-            CARCASĂ / DATE
-          </span>
-        </button>
-      </nav>
+      {/* In-Scene Technical Loupe for Casing Serial / Batteries / Ports */}
+      <CasingSpecsView
+        open={loupeOpen}
+        casing={state.casing}
+        onClose={() => setLoupeOpen(false)}
+      />
 
       <OfflineIndicator />
 
@@ -679,6 +593,8 @@ export default function App() {
         <VictoryScreen
           strikes={state.strikes}
           solvedCount={state.solvedModules.length}
+          elapsedSeconds={elapsedSeconds}
+          serialNumber={state.casing.serialNumber}
           onBackToConsole={() => setState((prev) => ({ ...prev, victory: false }))}
           onResetGame={handleAdminReset}
         />

@@ -1,9 +1,12 @@
 import React, { useEffect, useRef } from 'react';
-import { Heart, RotateCcw, Sparkles } from 'lucide-react';
+import { Heart, RotateCcw, Terminal } from 'lucide-react';
+import { SlottedScrew } from './ModuleCardShell';
 
 interface VictoryScreenProps {
   strikes: number;
   solvedCount: number;
+  elapsedSeconds?: number;
+  serialNumber?: string;
   onBackToConsole: () => void;
   onResetGame: () => void;
 }
@@ -20,11 +23,19 @@ interface Particle {
   alpha: number;
 }
 
-const GOLD_PALETTE = ['#fbbf24', '#f59e0b', '#fde68a', '#fb7185', '#ffffff'];
+const GOLD_PALETTE = ['#fbbf24', '#d97706', '#fde68a', '#f59e0b', '#e7e5e4'];
+
+function formatStoppedTime(totalSec: number): string {
+  const mins = Math.floor(totalSec / 60);
+  const secs = totalSec % 60;
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
 
 export const VictoryScreen: React.FC<VictoryScreenProps> = ({
   strikes,
   solvedCount,
+  elapsedSeconds = 0,
+  serialNumber = 'UNIT-03',
   onBackToConsole,
   onResetGame,
 }) => {
@@ -45,17 +56,17 @@ export const VictoryScreen: React.FC<VictoryScreenProps> = ({
     resize();
     window.addEventListener('resize', resize);
 
-    const particles: Particle[] = Array.from({ length: prefersReducedMotion ? 16 : 85 }).map(
+    const particles: Particle[] = Array.from({ length: prefersReducedMotion ? 14 : 65 }).map(
       () => ({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height - canvas.height * 0.25,
-        vx: (Math.random() - 0.5) * 1.4,
-        vy: 1.2 + Math.random() * 2.2,
-        size: 4 + Math.random() * 6,
+        vx: (Math.random() - 0.5) * 1.1,
+        vy: 1.0 + Math.random() * 1.8,
+        size: 3.5 + Math.random() * 5,
         rot: Math.random() * Math.PI * 2,
-        vRot: (Math.random() - 0.5) * 0.08,
+        vRot: (Math.random() - 0.5) * 0.06,
         color: GOLD_PALETTE[Math.floor(Math.random() * GOLD_PALETTE.length)],
-        alpha: 0.6 + Math.random() * 0.4,
+        alpha: 0.45 + Math.random() * 0.4,
       })
     );
 
@@ -95,7 +106,7 @@ export const VictoryScreen: React.FC<VictoryScreenProps> = ({
   return (
     <div
       data-testid="victory-screen"
-      className="fixed inset-0 z-[1200] overflow-y-auto bg-gradient-to-b from-[#1f1409] via-[#2b1a0c] to-[#120b05] text-amber-50 flex items-center justify-center p-5"
+      className="fixed inset-0 z-[1200] overflow-y-auto workbench-bg text-stone-100 flex items-center justify-center p-4 sm:p-6"
     >
       <canvas
         ref={canvasRef}
@@ -103,46 +114,99 @@ export const VictoryScreen: React.FC<VictoryScreenProps> = ({
         aria-hidden="true"
       />
 
-      <div className="relative z-10 w-full max-w-lg rounded-2xl border border-amber-400/50 bg-[#1a1108]/90 shadow-[0_24px_80px_rgba(245,158,11,0.28)] p-6 sm:p-8 text-center">
-        <div className="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-amber-300 to-amber-600 flex items-center justify-center shadow-[0_0_32px_rgba(251,191,36,0.65)] mb-5">
-          <Heart className="w-8 h-8 text-amber-950 fill-amber-950" aria-hidden="true" />
+      <div className="chassis-plate metal-micrograin relative z-10 w-full max-w-xl p-5 sm:p-7">
+        <SlottedScrew className="absolute top-2.5 left-2.5" angle={14} />
+        <SlottedScrew className="absolute top-2.5 right-2.5" angle={-32} />
+        <SlottedScrew className="absolute bottom-2.5 left-2.5" angle={54} />
+        <SlottedScrew className="absolute bottom-2.5 right-2.5" angle={-18} />
+
+        {/* Header Strip: Uncoupled Relays & Neutralized Status */}
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-black/80 pb-3 mb-4 px-2">
+          <span className="brass-plaque px-2.5 py-0.5 font-tech text-[11px] font-bold text-amber-100">
+            DISPOZITIV NEUTRALIZAT · {serialNumber}
+          </span>
+          <span className="font-tech text-[10px] tracking-widest text-emerald-400">
+            RELEE DECUPLATE · CIRCUIT DESCHIS
+          </span>
         </div>
 
-        <p className="font-tech text-xs tracking-[0.26em] text-amber-300 uppercase">
-          Operațiunea 3 Ani · Protocol Complet
-        </p>
-
-        <h1 className="font-display text-2xl sm:text-3xl font-bold text-amber-100 mt-2 leading-tight">
-          MISIUNE ÎNDEPLINITĂ
-        </h1>
-        <p className="mt-3 text-base sm:text-lg text-amber-200/95 font-medium leading-relaxed">
-          La mulți ani pentru 3 ani minunați împreună!
-        </p>
-
-        <div className="grid grid-cols-2 gap-3 mt-6">
-          <div className="rounded-xl bg-amber-950/50 border border-amber-500/30 py-3 px-3">
-            <span className="font-tech text-[10px] text-amber-300/75 block">MODULE REZOLVATE</span>
-            <span className="font-lcd text-3xl text-amber-200">{solvedCount} / 7</span>
+        {/* Physical 7-Green-LED Bank + Uncoupled Relay Graphic */}
+        <div className="recessed-bay p-3 mb-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2" aria-label="Toate cele 7 module sunt pe verde">
+            {[1, 2, 3, 4, 5, 6, 7].map((m) => (
+              <div key={m} className="flex flex-col items-center gap-1">
+                <span className="hw-led-dome w-3.5 h-3.5 hw-led-green inline-block" />
+                <span className="font-tech text-[8px] text-stone-400">M{m}</span>
+              </div>
+            ))}
           </div>
-          <div className="rounded-xl bg-amber-950/50 border border-amber-500/30 py-3 px-3">
-            <span className="font-tech text-[10px] text-amber-300/75 block">ERORI (STRIKES)</span>
-            <span className="font-lcd text-3xl text-amber-200">{strikes}</span>
+
+          {/* Open Physical Relay Switch SVG */}
+          <svg viewBox="0 0 110 34" className="w-24 h-8 shrink-0" aria-hidden="true">
+            <rect x="4" y="15" width="24" height="6" fill="#7c6335" />
+            <circle cx="28" cy="18" r="3.5" fill="#d97706" />
+            <line x1="28" y1="18" x2="72" y2="6" stroke="#e5e2dc" strokeWidth="2.8" strokeLinecap="round" />
+            <circle cx="78" cy="18" r="3.5" fill="#52525b" />
+            <rect x="78" y="15" width="28" height="6" fill="#52525b" />
+          </svg>
+        </div>
+
+        {/* Main Anniversary Message & Brass Heart Emblem */}
+        <div className="text-center px-2">
+          <div className="mx-auto w-14 h-14 brass-plaque rounded-full flex items-center justify-center mb-3 shadow-lg">
+            <Heart className="w-7 h-7 text-amber-100 fill-amber-200" aria-hidden="true" />
+          </div>
+
+          <h1 className="font-display text-2xl sm:text-3xl font-bold text-amber-200 tracking-wide">
+            MISIUNE ÎNDEPLINITĂ
+          </h1>
+          <p className="mt-2 text-base sm:text-lg text-stone-200 font-medium leading-relaxed">
+            La mulți ani pentru 3 ani minunați împreună!
+          </p>
+        </div>
+
+        {/* Clean Technical Report (Stopped Timer, Solved Count, Strikes) */}
+        <div className="grid grid-cols-3 gap-2 mt-5">
+          <div className="crt-phosphor-glass py-2.5 px-2 text-center">
+            <span className="font-tech text-[9px] text-emerald-400/75 block relative z-10">
+              CRONOMETRU OPRIT
+            </span>
+            <span className="font-lcd text-2xl phosphor-text relative z-10">
+              {formatStoppedTime(elapsedSeconds)}
+            </span>
+          </div>
+
+          <div className="crt-phosphor-glass py-2.5 px-2 text-center">
+            <span className="font-tech text-[9px] text-emerald-400/75 block relative z-10">
+              MODULE
+            </span>
+            <span className="font-lcd text-2xl phosphor-text relative z-10">
+              {solvedCount} / 7
+            </span>
+          </div>
+
+          <div className="crt-amber-glass py-2.5 px-2 text-center">
+            <span className="font-tech text-[9px] text-amber-400/75 block relative z-10">
+              ERORI
+            </span>
+            <span className="font-lcd text-2xl nixie-tube relative z-10">{strikes}</span>
           </div>
         </div>
 
-        <div className="mt-6 flex flex-col sm:flex-row gap-3">
+        {/* Controls */}
+        <div className="mt-5 flex flex-col sm:flex-row gap-2.5">
           <button
             type="button"
             onClick={onBackToConsole}
-            className="flex-1 min-h-[46px] rounded-xl bg-amber-500 text-amber-950 font-display text-sm font-bold px-4 py-2.5 flex items-center justify-center gap-2 hover:bg-amber-400 transition-colors"
+            className="mech-key flex-1 min-h-[46px] px-4 py-2.5 flex items-center justify-center gap-2 font-display text-xs font-bold tracking-wider text-amber-200 cursor-pointer"
           >
-            <Sparkles className="w-4 h-4" aria-hidden="true" />
+            <Terminal className="w-4 h-4 text-amber-400" aria-hidden="true" />
             <span>Înapoi la Consolă</span>
           </button>
           <button
             type="button"
             onClick={onResetGame}
-            className="min-h-[46px] rounded-xl border border-amber-500/40 bg-amber-950/50 text-amber-200 font-tech text-xs px-4 py-2.5 flex items-center justify-center gap-2 hover:bg-amber-900/50 transition-colors"
+            className="mech-key-bakelite min-h-[46px] px-4 py-2.5 flex items-center justify-center gap-2 font-tech text-xs text-stone-300 cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Joacă din nou</span>
