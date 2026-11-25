@@ -27,8 +27,8 @@ export const DESTINATIONS: EncryptedDestination[] = [
     id: 1,
     codeName: 'OBIECTIV CRIPTAT #1',
     moduleRequired: 3, // Deblocat după Modulul 3
-    lat: 45.3492,
-    lng: 25.5523,
+    lat: 45.3553,
+    lng: 25.5494,
   },
   {
     id: 2,
