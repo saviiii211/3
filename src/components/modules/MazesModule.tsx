@@ -14,16 +14,16 @@ export const MazesModule: React.FC<MazesModuleProps> = ({ state, wallFlash, onMo
     state.markers.some((m) => m.col === col && m.row === row);
 
   return (
-    <div className="recessed-bay p-3">
-      <div className="flex flex-col sm:flex-row items-center gap-4">
-        {/* Industrial Phosphor-Green CRT Radar Screen */}
+    <div className="p-2.5 bg-[#ddd7c7] border border-[#15171a]/20 rounded-[2px]">
+      <div className="flex flex-col sm:flex-row items-center gap-3.5">
+        {/* 6x6 Physical LED Matrix Well (inspired by Image 1) */}
         <div
           data-testid="maze-grid"
-          className={`crt-phosphor-glass p-3 w-full max-w-[232px] aspect-square transition-colors ${
-            wallFlash ? 'ring-2 ring-red-500' : ''
+          className={`det-module-well p-2.5 w-full max-w-[224px] aspect-square transition-colors ${
+            wallFlash ? 'ring-2 ring-[#ff3b2a]' : ''
           }`}
         >
-          <div className="relative z-10 grid grid-cols-6 grid-rows-6 w-full h-full border border-emerald-800/75">
+          <div className="grid grid-cols-6 grid-rows-6 w-full h-full gap-1 bg-[#0b0c0d] p-1 border border-[#2c2f33]">
             {Array.from({ length: 36 }).map((_, idx) => {
               const row = Math.floor(idx / 6) + 1;
               const col = (idx % 6) + 1;
@@ -34,21 +34,25 @@ export const MazesModule: React.FC<MazesModuleProps> = ({ state, wallFlash, onMo
               return (
                 <div
                   key={`${col}-${row}`}
-                  className="relative flex items-center justify-center border border-emerald-900/40"
+                  className="relative flex items-center justify-center bg-[#141718] border border-[#1f2325]"
                 >
-                  <span className="w-1 h-1 rounded-full bg-emerald-600/60" aria-hidden="true" />
+                  {/* Dim physical unlit LED dome */}
+                  <span
+                    className="w-1.5 h-1.5 rounded-full bg-[#2c312e]"
+                    aria-hidden="true"
+                  />
 
                   {hasMarker && (
                     <span
                       aria-label={`Marcaj cerc la coloana ${col}, rândul ${row}`}
-                      className="absolute inset-1 rounded-full border-2 border-emerald-400/90 shadow-[0_0_8px_rgba(52,211,153,0.65)] animate-pulse"
+                      className="absolute inset-0.5 rounded-full border-2 border-[#3ddc84] shadow-[0_0_6px_rgba(61,220,132,0.65)]"
                     />
                   )}
 
                   {isGoal && (
                     <svg
                       viewBox="0 0 24 24"
-                      className="absolute w-4 h-4 text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.9)] animate-pulse z-10"
+                      className="absolute w-4 h-4 text-[#ff3b2a] z-10"
                       aria-label={`Ținta la coloana ${col}, rândul ${row}`}
                     >
                       <polygon points="12,3 22,20 2,20" fill="currentColor" />
@@ -58,7 +62,7 @@ export const MazesModule: React.FC<MazesModuleProps> = ({ state, wallFlash, onMo
                   {isPlayer && (
                     <span
                       aria-label={`Poziția curentă: coloana ${col}, rândul ${row}`}
-                      className="absolute w-3.5 h-3.5 rounded-full bg-amber-50 shadow-[0_0_12px_rgba(255,255,255,0.95)] z-20"
+                      className="absolute w-3.5 h-3.5 rounded-full bg-[#f5f2e8] border border-[#15171a] shadow-[0_0_8px_rgba(255,248,230,0.95)] z-20"
                     />
                   )}
                 </div>
@@ -67,7 +71,7 @@ export const MazesModule: React.FC<MazesModuleProps> = ({ state, wallFlash, onMo
           </div>
         </div>
 
-        {/* Heavy Machined Steel & Bakelite D-Pad */}
+        {/* 4 Directional Arcade Pushbuttons + Coordinate Window */}
         <div className="flex flex-col items-center gap-2">
           <div className="grid grid-cols-3 gap-1.5 w-[156px]">
             <div />
@@ -75,9 +79,9 @@ export const MazesModule: React.FC<MazesModuleProps> = ({ state, wallFlash, onMo
               type="button"
               onClick={() => onMove('up')}
               aria-label="Mută sus"
-              className="mech-key min-h-[48px] flex items-center justify-center text-emerald-300 cursor-pointer"
+              className="det-arcade-btn min-h-[46px] flex items-center justify-center cursor-pointer"
             >
-              <ArrowUp className="w-5 h-5" aria-hidden="true" />
+              <ArrowUp className="w-5 h-5 text-[#eceae2]" aria-hidden="true" />
             </button>
             <div />
 
@@ -85,12 +89,12 @@ export const MazesModule: React.FC<MazesModuleProps> = ({ state, wallFlash, onMo
               type="button"
               onClick={() => onMove('left')}
               aria-label="Mută stânga"
-              className="mech-key min-h-[48px] flex items-center justify-center text-emerald-300 cursor-pointer"
+              className="det-arcade-btn min-h-[46px] flex items-center justify-center cursor-pointer"
             >
-              <ArrowLeft className="w-5 h-5" aria-hidden="true" />
+              <ArrowLeft className="w-5 h-5 text-[#eceae2]" aria-hidden="true" />
             </button>
-            <div className="crt-phosphor-glass flex items-center justify-center font-tech text-[11px] phosphor-text">
-              <span className="relative z-10">
+            <div className="det-module-well flex items-center justify-center font-tech text-[11px] font-bold text-[#ffd9a0]">
+              <span>
                 {state.player.col},{state.player.row}
               </span>
             </div>
@@ -98,9 +102,9 @@ export const MazesModule: React.FC<MazesModuleProps> = ({ state, wallFlash, onMo
               type="button"
               onClick={() => onMove('right')}
               aria-label="Mută dreapta"
-              className="mech-key min-h-[48px] flex items-center justify-center text-emerald-300 cursor-pointer"
+              className="det-arcade-btn min-h-[46px] flex items-center justify-center cursor-pointer"
             >
-              <ArrowRight className="w-5 h-5" aria-hidden="true" />
+              <ArrowRight className="w-5 h-5 text-[#eceae2]" aria-hidden="true" />
             </button>
 
             <div />
@@ -108,13 +112,13 @@ export const MazesModule: React.FC<MazesModuleProps> = ({ state, wallFlash, onMo
               type="button"
               onClick={() => onMove('down')}
               aria-label="Mută jos"
-              className="mech-key min-h-[48px] flex items-center justify-center text-emerald-300 cursor-pointer"
+              className="det-arcade-btn min-h-[46px] flex items-center justify-center cursor-pointer"
             >
-              <ArrowDown className="w-5 h-5" aria-hidden="true" />
+              <ArrowDown className="w-5 h-5 text-[#eceae2]" aria-hidden="true" />
             </button>
             <div />
           </div>
-          <p className="font-tech text-[10px] text-stone-400 text-center">
+          <p className="font-tech text-[10px] font-bold text-[#15171a] text-center">
             Pereții sunt invizibili pe ecran.
           </p>
         </div>

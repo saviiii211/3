@@ -75,3 +75,32 @@ export const SINAIA_SIMULATED_ORIGIN = {
 export const FINAL_ARRIVAL_RADIUS_METERS = 65;
 
 export const STORAGE_KEY = 'op3ani_console_state_v1';
+
+// ============================================================================
+// INTRODUCERE, STAȚIE RADIO & CLIP FINAL (SE POATE EDITA UȘOR)
+// ============================================================================
+
+export const INTRO_SEEN_KEY = 'op3ani_intro_seen_v1';
+
+export const INTRO_HEADER_LINES: string[] = [
+  '> TERMINAL SECURIZAT — DOSAR 03',
+  '> AUTENTIFICARE ... OK',
+  '> DESCHIDERE MESAJ ...',
+];
+
+export const INTRO_TYPING_MS = 38;
+
+export const INTRO_TEXT =
+  "[[AICI VA FI TEXTUL INTRODUCTIV — îl înlocuiesc eu ulterior]]";
+
+export const RADIO_AMBIENT_LINES: string[] = [
+  '…detectiv… mai ai… timp…',
+  '…aici… baza… mă auzi…',
+  '…semnalul… slăbește… verifică dosarul…',
+  '…atenție la… carcasă…',
+];
+
+// Recomandat: MP4 H.264 + AAC, 720p, sub 40MB (nu se precachează în PWA)
+export const FINALE_VIDEO_SRC = '/assets/clip-final.mp4';
+export const FINALE_VIDEO_POSTER: string | null = null;
+

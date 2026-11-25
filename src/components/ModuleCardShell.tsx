@@ -1,5 +1,4 @@
-import React from 'react';
-import { Check, Lock } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { MissionMetaItem, ModuleStatus } from '../game/types';
 
 interface ModuleCardShellProps {
@@ -12,6 +11,9 @@ interface ModuleCardShellProps {
   children: React.ReactNode;
 }
 
+/**
+ * Phillips cross-head machined screw (kept exported as SlottedScrew for VictoryScreen/AdminModal compatibility).
+ */
 export const SlottedScrew: React.FC<{ className?: string; angle?: number }> = ({
   className = '',
   angle = 22,
@@ -22,21 +24,23 @@ export const SlottedScrew: React.FC<{ className?: string; angle?: number }> = ({
     aria-hidden="true"
   >
     <defs>
-      <radialGradient id="screwHead" cx="35%" cy="30%" r="70%">
-        <stop offset="0%" stopColor="#6b7075" />
-        <stop offset="55%" stopColor="#35383c" />
-        <stop offset="100%" stopColor="#141618" />
+      <radialGradient id="phillipsHead" cx="35%" cy="30%" r="70%">
+        <stop offset="0%" stopColor="#949691" />
+        <stop offset="58%" stopColor="#4f524e" />
+        <stop offset="100%" stopColor="#1b1d1c" />
       </radialGradient>
     </defs>
-    <circle cx="9.6" cy="9.8" r="7.4" fill="rgba(0,0,0,0.68)" />
-    <circle cx="9" cy="9" r="7.2" fill="url(#screwHead)" stroke="#1b1d20" strokeWidth="1" />
-    <circle cx="9" cy="9" r="5.6" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="0.7" />
+    <circle cx="9.6" cy="9.8" r="7.3" fill="rgba(0,0,0,0.52)" />
+    <circle cx="9" cy="9" r="7" fill="url(#phillipsHead)" stroke="#242625" strokeWidth="0.9" />
+    <circle cx="9" cy="9" r="5.5" fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="0.6" />
     <g transform={`rotate(${angle} 9 9)`}>
-      <rect x="2.6" y="7.9" width="12.8" height="2.2" rx="0.5" fill="#090a0b" />
-      <line x1="3" y1="7.8" x2="15" y2="7.8" stroke="rgba(255,255,255,0.16)" strokeWidth="0.6" />
+      <rect x="4.1" y="7.9" width="9.8" height="2.2" rx="0.4" fill="#111314" />
+      <rect x="7.9" y="4.1" width="2.2" height="9.8" rx="0.4" fill="#111314" />
     </g>
   </svg>
 );
+
+const TILT_DEG = [-1.1, 0.9, -0.7, 1.2, -0.9, 0.8, -1.0];
 
 export const ModuleCardShell: React.FC<ModuleCardShellProps> = ({
   meta,
@@ -47,6 +51,20 @@ export const ModuleCardShell: React.FC<ModuleCardShellProps> = ({
   onInspect,
   children,
 }) => {
+  const prevStatusRef = useRef<ModuleStatus>(status);
+  const [rippingSeal, setRippingSeal] = useState(false);
+
+  // Trigger 600ms seal-tearing animation whenever module transitions from locked -> active
+  useEffect(() => {
+    const prev = prevStatusRef.current;
+    prevStatusRef.current = status;
+    if (prev === 'locked' && status !== 'locked') {
+      setRippingSeal(true);
+      const t = window.setTimeout(() => setRippingSeal(false), 620);
+      return () => window.clearTimeout(t);
+    }
+  }, [status]);
+
   const ledClass =
     status === 'solved'
       ? 'hw-led-green'
@@ -59,52 +77,72 @@ export const ModuleCardShell: React.FC<ModuleCardShellProps> = ({
   const statusText =
     status === 'solved' ? 'DEZAMORSAT' : status === 'active' ? 'ACTIV' : 'SIGILAT';
 
+  const dymoTilt = TILT_DEG[(meta.id - 1) % TILT_DEG.length];
+
   return (
     <section
       data-testid={`module-card-${meta.id}`}
       data-status={status}
-      className={`chassis-plate metal-micrograin relative transition-colors duration-200 ${
+      className={`det-ivory-plate relative transition-all duration-200 ${
         isFocused
-          ? 'p-3.5 sm:p-4'
+          ? 'p-3.5 sm:p-4 brightness-[1.03]'
           : 'p-2.5 sm:p-3 h-full flex flex-col overflow-hidden'
       } ${
-        status === 'solved'
-          ? 'ring-1 ring-emerald-700/60'
-          : strikePulse
-            ? 'ring-1 ring-red-600/80'
-            : status === 'active'
-              ? 'ring-1 ring-amber-700/45'
-              : 'opacity-85'
+        status === 'active'
+          ? 'ring-2 ring-[#e89b2d]/45 brightness-[1.03]'
+          : status === 'solved'
+            ? 'ring-2 ring-[#166534]/55'
+            : strikePulse
+              ? 'ring-2 ring-[#c0281c]'
+              : ''
       }`}
     >
-      {/* 4 Worn Slotted Screws in Corners */}
-      <SlottedScrew className="absolute top-2 left-2" angle={18} />
-      <SlottedScrew className="absolute top-2 right-2" angle={-34} />
-      <SlottedScrew className="absolute bottom-2 left-2" angle={64} />
-      <SlottedScrew className="absolute bottom-2 right-2" angle={-14} />
-
-      {/* Top Metal Header Strip: Riveted Brass Code Plaque + Physical Status LED + Title */}
+      {/* Subtle engraved border & physical wear scratches */}
       <div
-        className={`shrink-0 border-b border-black/70 shadow-[0_1px_0_rgba(255,255,255,0.06)] ${
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-1.5 border border-[#15171a]/15"
+      />
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 240 160"
+        preserveAspectRatio="none"
+        className="pointer-events-none absolute inset-0 w-full h-full opacity-20"
+      >
+        <line x1="16" y1="26" x2="38" y2="29" stroke="#15171a" strokeWidth="0.6" />
+        <line x1="185" y1="138" x2="218" y2="132" stroke="#15171a" strokeWidth="0.5" />
+      </svg>
+
+      {/* 4 Worn Phillips Screws in Corners at varied angles */}
+      <SlottedScrew className="absolute top-1.5 left-1.5" angle={14 + meta.id * 11} />
+      <SlottedScrew className="absolute top-1.5 right-1.5" angle={-36 - meta.id * 9} />
+      <SlottedScrew className="absolute bottom-1.5 left-1.5" angle={62 + meta.id * 7} />
+      <SlottedScrew className="absolute bottom-1.5 right-1.5" angle={-18 + meta.id * 13} />
+
+      {/* Top Silkscreen Header: Slightly Crooked Navy Dymo Label + Metal-Ring Status Lamp */}
+      <div
+        className={`relative z-10 shrink-0 border-b border-[#15171a]/25 ${
           isFocused ? 'px-2.5 pt-0.5 pb-2' : 'px-2 pt-0.5 pb-1.5'
         }`}
       >
         <div className="flex items-center justify-between gap-2">
-          <span className="brass-plaque px-2 py-0.5 font-tech text-[10px] font-bold tracking-wider text-amber-100 shrink-0">
+          <span
+            className="det-dymo-label px-2 py-0.5 text-[10px] font-bold shrink-0"
+            style={{ transform: `rotate(${dymoTilt}deg)` }}
+          >
             {meta.code}
           </span>
 
-          {/* Machined Collar Glass Status LED */}
+          {/* Physical Glass Lamp in Metal Collar */}
           <div className="flex items-center gap-1.5 pr-2 shrink-0">
             <span
-              className={`font-tech text-[9px] tracking-wider ${
+              className={`font-tech text-[10px] font-bold tracking-wider ${
                 status === 'solved'
-                  ? 'text-emerald-400'
+                  ? 'text-[#166534]'
                   : strikePulse
-                    ? 'text-red-400'
+                    ? 'text-[#c0281c]'
                     : status === 'active'
-                      ? 'text-amber-400'
-                      : 'text-stone-500'
+                      ? 'text-[#8c4f08]'
+                      : 'text-[#525458]'
               }`}
             >
               {statusText}
@@ -117,7 +155,7 @@ export const ModuleCardShell: React.FC<ModuleCardShellProps> = ({
         </div>
 
         <h2
-          className={`font-display font-bold tracking-wide text-stone-200 mt-1 ${
+          className={`font-display font-bold text-[#15171a] mt-1 ${
             isFocused
               ? 'text-base sm:text-lg truncate'
               : 'text-[12.5px] sm:text-[13px] leading-tight whitespace-nowrap'
@@ -129,66 +167,98 @@ export const ModuleCardShell: React.FC<ModuleCardShellProps> = ({
 
       {/* Recessed Module Compartment */}
       <div
-        className={`relative ${
+        className={`relative z-10 ${
           isFocused ? 'mt-2.5' : 'mt-2 flex-1 min-h-0 flex flex-col overflow-hidden'
         }`}
       >
         {status === 'locked' ? (
           <div
-            className={`recessed-bay px-3 flex flex-col items-center justify-center text-center relative overflow-hidden ${
-              isFocused ? 'py-8' : 'flex-1 py-4'
+            className={`relative overflow-hidden bg-gradient-to-b from-[#2f3337] via-[#222528] to-[#17191b] border-2 border-[#0e1011] shadow-[inset_2px_3px_10px_rgba(0,0,0,0.72)] px-3 flex flex-col items-center justify-center text-center ${
+              isFocused ? 'py-10' : 'flex-1 py-4'
             }`}
           >
-            {/* Riveted steel blast-hatch crossbars */}
+            {/* 2 Steel Cover Bolts */}
+            <SlottedScrew className="absolute top-2 left-2.5 scale-90" angle={42} />
+            <SlottedScrew className="absolute bottom-2 right-2.5 scale-90" angle={-28} />
+
+            {/* Diagonal White Paper Seal Tape ("SIGILAT · NU DESCHIDE") */}
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 h-3 bg-gradient-to-b from-stone-800/40 to-black/60 border-y border-stone-700/30"
-            />
-            <div className="relative z-10 w-9 h-9 rounded-[2px] bakelite-surface flex items-center justify-center mb-1.5">
-              <Lock className="w-4 h-4 text-stone-400" aria-hidden="true" />
+              className="det-seal-tape pointer-events-none px-8 py-0.5 font-display text-[10px] font-bold tracking-[0.14em] -rotate-6 mb-2 select-none"
+            >
+              SIGILAT · NU DESCHIDE
             </div>
-            <p className="relative z-10 font-tech text-[11px] font-bold tracking-widest text-stone-300 uppercase">
+
+            <p className="relative z-10 font-tech text-[11px] font-bold tracking-wider text-[#eceae2] uppercase">
               Compartiment Sigilat
             </p>
-            <p className="relative z-10 font-tech text-[10px] text-stone-500 mt-1 max-w-[230px] leading-snug">
+            <p className="relative z-10 font-tech text-[10px] text-[#bdb6a4] mt-1 max-w-[230px] leading-snug">
               Rezolvă modulul anterior pentru a decupla zăvorul.
             </p>
           </div>
         ) : (
           <div
-            className={`${isFocused ? '' : 'flex-1 min-h-0 overflow-hidden'} ${
-              status === 'solved' ? 'opacity-80 pointer-events-none select-none' : ''
+            className={`relative ${isFocused ? '' : 'flex-1 min-h-0 overflow-hidden'} ${
+              status === 'solved' ? 'opacity-85 pointer-events-none select-none' : ''
             }`}
           >
             {children}
+
+            {/* 600ms Seal Rip Overlay on Unlock Transition */}
+            {rippingSeal && (
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center"
+              >
+                <div className="det-seal-tape det-seal-ripping px-8 py-1 font-display text-xs font-bold tracking-[0.16em]">
+                  SIGILAT · RUPT
+                </div>
+              </div>
+            )}
+
+            {/* Green Rubber Stamp "DEZAMORSAT" on Solved Plate */}
+            {status === 'solved' && (
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"
+              >
+                <div className="det-rubber-stamp bg-[#e6e1d3]/65 text-xs sm:text-sm">
+                  DEZAMORSAT
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Solved Phosphor Strip */}
+        {/* Typed Evidence Note taped below plate when Solved */}
         {status === 'solved' && (
           <div
             className={`${
               isFocused ? 'mt-2.5 px-3 py-1.5' : 'mt-1.5 px-2 py-1 shrink-0'
-            } rounded-[2px] border border-emerald-700/70 bg-emerald-950/90 flex items-center gap-1.5 shadow-inner ${
-              justSolved ? 'ring-1 ring-emerald-400' : ''
+            } relative bg-[#f3eedf] border border-[#8a8576] shadow-sm flex items-center gap-1.5 ${
+              justSolved ? 'ring-2 ring-[#3ddc84]' : ''
             }`}
           >
-            <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" aria-hidden="true" />
-            <p className="font-tech text-[10px] font-bold text-emerald-300 tracking-wide truncate">
+            {/* Tiny adhesive tape accent */}
+            <span
+              aria-hidden="true"
+              className="w-2.5 h-3.5 bg-[#d9cfab]/80 border border-[#8a8576]/40 shrink-0 -rotate-6"
+            />
+            <p className="font-tech text-[10px] font-bold text-[#166534] tracking-wide truncate">
               {isFocused ? 'DECRIPTARE REUȘITĂ — COORDONATE ACTUALIZATE' : 'DECRIPTAT ✓'}
             </p>
           </div>
         )}
 
-        {/* Overview Mode Click-to-Zoom Overlay (prevents accidental tiny misclicks while zoomed out) */}
+        {/* Overview Mode Click-to-Zoom Overlay */}
         {!isFocused && onInspect && (
           <button
             type="button"
             onClick={onInspect}
             aria-label={`Deschide și focalizează modulul ${meta.code}: ${meta.title}`}
-            className="group absolute inset-0 z-20 cursor-pointer rounded-[2px] bg-transparent hover:bg-amber-500/[0.06] focus-visible:outline-2 focus-visible:outline-amber-400 transition-colors flex items-end justify-end p-2"
+            className="group absolute inset-0 z-20 cursor-pointer rounded-[2px] bg-transparent hover:bg-[#ffd9a0]/[0.08] focus-visible:outline-2 focus-visible:outline-[#ffd9a0] transition-colors flex items-end justify-end p-2"
           >
-            <span className="opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity brass-plaque px-2 py-0.5 font-tech text-[10px] font-bold text-amber-100 tracking-wider">
+            <span className="opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity det-dymo-label px-2 py-0.5 text-[10px] font-bold">
               {status === 'locked' ? 'INSPECTEAZĂ' : 'FOCALIZEAZĂ'}
             </span>
           </button>

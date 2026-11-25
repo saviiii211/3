@@ -1,0 +1,210 @@
+Rolul tău și referințele atașate
+Ești un designer-dezvoltator front-end senior (React, Vite, Tailwind v4) cu simț cinematografic pentru atmosfera noir. 
+Cele 2 imagini atașate sunt referințe obligatorii. 
+• Imaginea 1 — atmosfera. O cameră aproape neagră. Singura lumină, caldă și joasă, cade pe o masă acoperită cu o față de masă albă brodată (motive florale/dantelă, ivoriu în lumină, cenușiu în umbră). Pe masă: un alimentator de laborator gri cu afișaj roșu și butoane, cabluri roșu/negru cu clești crocodil, trei cutii de carton kraft așezate pe diagonală (fiecare cu un modul și burete negru). În prim-plan o mână ține o stație radio (walkie-talkie) galbenă cu negru, cu LCD verde luminat și tastatură gri. Granulație de film, colțuri înnegrite.
+• Imaginea 2 — carcasa. O carcasă groasă, dreptunghiulară, imprimată 3D, gri-deschis mat (se văd liniile de strat), cu muchia de sus închisă (negru-albăstrui). Interiorul e împărțit în 2 rânduri × 3 compartimente cu pereți groși; pereții rândului de jos au decupaje în arc. În compartimente: plăci albe cu prize pătrate negre, butoane arcade negre cu microîntrerupătoare roșii, un cadran rotund; mănunchiuri de fire răsucite în perechi (roșu, verde, albastru, galben, alb). Alături, o placă albă separată pentru cronometru: 4 găuri mici rotunde sus (lămpi de eroare), 4 șuruburi în colțuri, un decupaj rotund mare (difuzor), un buton mic cu pictogramă de difuzor și 4 cifre roșii cu 7 segmente („0000”).
+0. Mod de lucru
+• Citește tot promptul înainte să scrii cod. Nu pune întrebări: dacă ceva e neclar, alege varianta cea mai apropiată de referințe și notează presupunerea într-un rând, în rezumatul final.
+• Lucrează pe etape (secțiunea 13). După fiecare etapă rulează npm run lint și npm run build. Nu trece mai departe cu erori.
+• Livrează fișiere COMPLETE, fără „// restul codului rămâne la fel”. Nu rescrie proiectul de la zero: modifici ce e necesar, restul rămâne.
+• Nu schimba versiunile dependențelor existente. Nu adăuga biblioteci 3D. Singurele dependențe noi permise sunt pachetele de fonturi @fontsource/* (secțiunea 3.4).
+1. Contextul aplicației (ce există acum)
+• Aplicație PWA mobile-first (portret): React 19, Vite, Tailwind v4, motion, lucide-react, Leaflet. Nu există three.js: carcasa 3D este CSS 3D (Bomb3DScene.tsx) și trebuie să rămână așa.
+• Jucătorul este un detectiv care dezamorsează un dispozitiv: 7 module de puzzle (MOD-01 Memoria, MOD-02 Fire Complicate, MOD-03 Cine e pe primul loc?, MOD-04 Secvențele de Fire, MOD-05 Labirintele, MOD-06 Butonul Rotativ, MOD-07 Parolele Secrete) plus compartimentul AUX-08 (voltmetru de tensiune, buton GPS, buton Carcasă), un radar GPS (Leaflet), o carcasă inspectabilă (serie, baterii, porturi) și un manual PDF separat.
+• Aspectul actual: panouri de oțel negru cu accente chihlimbar/verde, un „dashboard sci-fi” generic. Trebuie înlocuit integral.
+• Fișiere relevante: src/App.tsx (stare, handlere, antet), src/components/Bomb3DScene.tsx (carcasa 3D: 4×2 pe desktop, 2×4 pe mobil, cameră, presetări de unghi), ModuleCardShell.tsx, modules/*.tsx (UI-ul modulelor), CasingSpecsView.tsx (lupa + componentele de hardware ale carcasei), index.css, config.ts.
+2. Reguli absolute (nu se negociază)
+2.1 Fișiere de neatins (nu modifica niciun caracter)
+• src/game/memory.ts, complicatedWires.ts, whosOnFirst.ts, wireSequences.ts, mazes.ts, knobs.ts, passwords.ts, casing.ts, missionState.ts, types.ts, rules.test.ts (testele trebuie să treacă neschimbate).
+• src/components/GpsRadarView.tsx (integrarea GPS), src/components/AdminModal.tsx, src/components/VictoryScreen.tsx.
+• src/utils/sound.ts (sistemul audio existent).
+• public/assets/aistudio/Manual_de_Dezamorsare_-_Misiunea_Aniversara__3_Ani__436e47b1.pdf.
+• În src/config.ts nu schimba valorile existente (ADMIN_PIN, DESTINATIONS, SINAIA_SIMULATED_ORIGIN, FINAL_ARRIVAL_RADIUS_METERS, STORAGE_KEY). Ai voie doar să ADAUGI exporturi noi.
+2.2 Comportament care rămâne 100% identic
+• Forma stării (PersistedMissionState), cheile localStorage op3ani_console_state_v1 și op3ani_elapsed_seconds_v1, regulile de greșeli (strikes), ordinea de deblocare a modulelor, deblocarea GPS, destinațiile.
+• Cele 5 atingeri rapide pe cronometru deschid Panoul de Administrator (PIN-ul din config). Cronometrul rămâne elementul pe care se face această atingere.
+• Confirmarea sosirii finale duce la victory: true. Comutatorul de sunet (mute), instalarea PWA și indicatorul offline rămân funcționale.
+• Toate numele handlerelor din App.tsx și semnăturile props-urilor componentelor de module rămân neschimbate. Modifici doar markup-ul, clasele și vizualul.
+• Toate atributele data-testid existente rămân.
+• Singura modificare de logică permisă: cronometrul de telemetrie (elapsedSeconds) curge DOAR în faza de joc, nu în timpul introducerii și al finalului. Nimic altceva din logica de timp nu se schimbă.
+2.3 Clase CSS partajate cu fișierele protejate
+GpsRadarView, AdminModal, VictoryScreen, PWAInstallButton și OfflineIndicator folosesc clase din index.css: chassis-plate, metal-micrograin, recessed-bay, bakelite-surface, brass-plaque, crt-phosphor-glass, crt-amber-glass, nixie-tube, phosphor-text, mech-key, mech-key-bakelite, mech-toggle, hw-led-dome, hw-led-green, hw-hazard-stripe, workbench-bg, font-lcd, font-tech, font-display, radar-sweep-beam, animate-radar-ping, plus stilurile .leaflet-*.
+• Nu șterge și nu redenumi aceste clase. Poți (și trebuie) să le re-stilizezi cu noua paletă, ca ecranele protejate să moștenească noul aspect fără să fie editate.
+• După re-stilizare verifică în cod că textul rămâne lizibil în aceste ecrane (contrast, fără depășiri).
+• ModuleCardShell.tsx exportă SlottedScrew (folosit de VictoryScreen): păstrează exportul și semnătura { className?, angle? }. Îl poți desena altfel (șurub Phillips).
+• Clasele NOI pe care le creezi folosesc prefixul det-.
+2.4 Resurse și compatibilitate
+• Nicio imagine descărcată de pe internet. Totul în cod: SVG, CSS, Canvas, WebAudio. Excepții: fonturile (self-hosted) și clipul utilizatorului.
+• Aplicația se folosește pe telefon, în aer liber, cu semnal slab: tot ce nu e harta GPS sau clipul video trebuie să meargă OFFLINE (PWA). Deci fonturile se instalează local, nu din Google Fonts.
+• Respectă prefers-reduced-motion peste tot (în introducere textul apare instant, fără pâlpâire, fără mers animat; doar fade-uri scurte).
+• Toate textele în română, cu diacritice corecte (ă â î ș ț, cu virgulă dedesubt).
+3. Direcția artistică (prioritatea nr. 1)
+3.1 Concept
+„Camera abandonată a unui detectiv, noaptea.” Un singur bec gol cu abajur de tablă atârnă deasupra unei mese cu față de masă albă brodată. Pe masă stau dispozitivul (carcasa imprimată 3D din Imaginea 2), o stație radio galbenă și obiecte de anchetă. Restul camerei e în umbră: tapet scorojit, un geam cu jaluzele prin care intră câteva dâre de lumină rece, o tablă cu fotografii și ață roșie abia vizibilă. Totul trebuie să pară FIZIC, uzat, făcut de mână, nu o interfață.
+3.2 Interdicții (ce face un design să pară „generat de AI”)
+• Fără gradient neon, fără „glow” peste tot, fără carduri de sticlă cu colțuri rotunjite egale, fără pictograme lucide ca decor principal pe dispozitiv, fără simetrie perfectă peste tot, fără umbre uniforme.
+• Fără aspect de „dashboard”. Controalele sunt obiecte: butoane arcade, comutatoare, borne cu șurub, etichete.
+• Imperfecțiuni obligatorii: zgârieturi fine, praf în colțuri, amprente estompate pe plăci, etichete ușor strâmbe (±1°), resturi de bandă adezivă, urme de creion, șuruburi cu unghiuri diferite, uzură la muchii.
+• Paletă limitată (3.3). Un singur izvor de lumină principal (becul) și unul secundar, rece și slab (geamul).
+• Verdele fosforescent apare NUMAI pe terminal și pe LCD-ul stației radio. Roșu = alarmă și cifrele cronometrului. Galben = stația radio.
+3.3 Paleta (hex)
+• Întuneric: #050606, #0a0d0c; perete #141a17; tapet #1b221e.
+• Lumina becului: #ffd9a0 (centru), #e8b66f (marginea conului). Lumină rece de geam: #7f9bb8 la 6–10% opacitate.
+• Față de masă: #d9d3c4 (lumină), #8a8576 (penumbră), #3a382f (umbră); broderie #bdb6a4.
+• Carcasă imprimată 3D: față #c2c4bf, sus #d0d1cc, stânga #a9aba6, dreapta #9fa19c, umbre #6d6f6b; capac superior metalic #172030 → #0f1620.
+• Plăci frontale (ABS ușor îngălbenit): #e6e1d3; cerneală neagră #15171a; bandă de etichetă tip Dymo #101a2b cu litere #eceae2.
+• Alarmă roșie #c0281c (LED aprins #ff3b2a); LED verde #3ddc84; LED chihlimbar #e89b2d.
+• Stație radio: galben #f1c40f, negru #17181a, LCD #1b2a12 cu text #9be15d.
+• Terminal: fundal #04130a → #0b2a14, text #6dff8f, umbră de text rgba(57,255,106,.55).
+3.4 Tipografie
+• Terminal (introducere): VT323.
+• Texte de dosar, tipărituri pe plăci, note: Courier Prime (regular + bold).
+• Etichete în relief tip Dymo și titluri scurte de modul: Oswald (majuscule, letter-spacing: .08em).
+• Cifre de cronometru și afișaje cu 7 segmente: le desenezi TU ca SVG (componenta SevenSegmentDisplay), nu cu fonturi.
+• Fonturile se instalează local: @fontsource/vt323, @fontsource/courier-prime, @fontsource/oswald. Pentru fiecare importă și subsetul latin-ext (fără el lipsesc ș și ț). Elimină <link>-urile Google Fonts din index.html. Verifică obligatoriu că șirul „ĂÂÎȘȚ ăâîșț” se afișează corect în toate cele 3 fonturi; altfel alege un font de rezervă care îl suportă.
+• Clasele existente font-display, font-tech, font-lcd rămân, dar le mapezi pe noile familii (display → Oswald, tech → Courier Prime, lcd → VT323).
+3.5 Lumina și atmosfera
+• Con de lumină de la bec: poligon trapezoidal cu gradient radial, mix-blend-mode: screen, opacitate 0.16–0.22; centrul conului pe dispozitiv, ușor decalat spre stânga-sus (ca în Imaginea 1).
+• Vignetă puternică la margini (negru 85–90%), dar NICIODATĂ peste modulele puzzle-ului.
+• Granulație de film: strat static de zgomot (PNG/SVG mic repetat), opacitate 5–7%, animat în 4 poziții cu steps(4) la 0.4s.
+• Praf în con: 20 de particule pe desktop, 8 pe mobil, mișcare lentă, doar transform/opacity.
+• Becul se clatină imperceptibil (±0.6°, 7s) și tremură rar: la 25–50s, 3 pâlpâiri de câte 60–120ms.
+• Dâre de lumină rece de la jaluzele pe perete: 6 benzi oblice, #7f9bb8, 6–8%.
+• Lizibilitate: atmosfera sumbră NU are voie să facă puzzle-ul greu de citit. Modulele stau în con (plăcile ivoriu sunt zone luminoase), textul puzzle are contrast minim 4.5:1, iar modulul activ are luminozitate ușor crescută.
+3.6 Tensiunea
+Rădăcina are deja data-tension (0–3) și variabila --tension-heat: păstrează-le. Nivel 1: pâlpâiri mai dese. Nivel 2: lumina virează ușor spre roșu, becul se clatină mai tare, bâzâit grav și slab. Nivel 3: pâlpâire aproape continuă, vignetă mai strânsă, un LED roșu de urgență pulsează pe perete. Efectele existente (scuturarea, blițul roșu) rămân.
+4. Fundalul: camera sumbră și masa (ca în Imaginea 1)
+Înlocuiește workbench-bg cu o componentă nouă RoomBackdrop (aceeași componentă servește jocul, introducerea și finalul). Straturi, din spate în față:
+1.  Bază #050606.
+2.  Peretele (partea de sus, până la ~58% din înălțime): tapet cu dungi verticale foarte fine (repeating-linear-gradient), 3–4 zone de tapet scorojit (poligoane neregulate cu muchie mai deschisă), pată de igrasie (gradient radial maro, multiply), crăpături (SVG, trasee negre fine), plintă la orizont. Pe perete, în umbră: o tablă de plută cu 5–6 fotografii/notițe și ață roșie între ele (siluete SVG simple, vizibile doar la marginea conului) și un geam cu jaluzele (dârele reci).
+3.  Becul: cablu din partea de sus, bec gol cu abajur conic de tablă emailată (verde-închis la exterior, alb la interior), halou cald și conul de lumină.
+4.  Masa: orizont la ~58–62% din înălțimea scenei. Planul mesei = element cu rotateX(60–64deg) într-un container cu perspective: 900px. Față de masă #d9d3c4 cu broderie repetată (pattern SVG, motive florale/dantelă, trasee de 1px #bdb6a4, dală de ~120px), 3–4 cute diagonale (gradient liniar slab), o pată de ceai, margine zimțată de dantelă. În față, fața de masă cade peste marginea mesei ~60px, cu cute verticale, apoi negru. Lumina scade radial: la margini devine #3a382f.
+5.  Obiecte pe masă (mai jos).
+6.  Dispozitivul 3D (Bomb3DScene) cu o umbră de contact: elipsă neagră blurată, care se deplasează și se deformează ușor când carcasa e rotită.
+7.  Strat frontal: granulație, vignetă, praf.
+Obiecte pe masă (toate desenate în SVG/CSS, estompate în afara conului de lumină):
+• Alimentator de laborator gri în spate-dreapta, cu afișaj roșu cu 7 segmente („03.03”, ușor fluctuant când sunt greșeli) și 2 butoane; cabluri roșu/negru cu clești crocodil care ajung la dispozitiv. Doar decor.
+• Cutie de carton kraft deschisă, cu burete negru, în spate-stânga.
+• Dosar manila cu eticheta „DOSAR 03”, un creion, o cană cu cafea rece (inel de cafea pe față de masă) și o lupă. LUPA este clicabilă și deschide inspecția carcasei (același handler onOpenLoupe, aria-label „Inspecție carcasă”).
+• Stația radio (secțiunea 7), jos-dreapta, înclinată cu −12°, ca în Imaginea 1.
+Compoziție:
+• Desktop (scenă ≥ 760px lățime): dispozitivul centrat; alimentatorul în spate; stația radio jos-dreapta; dosarul și lupa jos-stânga.
+• Mobil portret: dispozitivul rămâne scalat de logica existentă din Bomb3DScene; masa se vede sub el pe ~25% din înălțime; stația radio jos-dreapta, cu LCD-ul clar vizibil (~110px înălțime); dosarul și lupa jos-stânga, mai mici. Peretele și becul rămân vizibile sus (becul poate fi parțial în afara cadrului, conul rămâne).
+• Bara de presetări de unghi (Față/Sus/Stânga/Dreapta/Inspecție/Reset) rămâne funcțională, stilizată ca butoane mici cu etichete Dymo, așezată pe marginea din față a mesei.
+5. Carcasa dispozitivului (ca în Imaginea 2)
+Păstrează geometria și matematica camerei din Bomb3DScene.tsx (dimensiuni 1260×740×220 pe desktop și 660×1140×220 pe mobil, grila 4×2 / 2×4, presetările de unghi, focalizarea pe modul, tragerea cu degetul). Schimbi materialele, detaliile și ce e desenat pe fiecare față.
+• Material: plastic imprimat 3D, gri-deschis mat. Liniile de strat: repeating-linear-gradient(0deg, rgba(0,0,0,.05) 0 1px, transparent 1px 3px); granulație fină (zgomot static, nu filtru SVG live); fețe cu nuanțe diferite (paleta 3.3); chamfer la muchii (1px lumină sus-stânga, 1px umbră jos-dreapta); murdărie în colțuri (gradient radial); câteva zgârieturi.
+• Fața principală: ramă groasă (pereți ~26px) cu 8 compartimente adânci (7 module + AUX-08), separate de nervuri de ~18px. Fiecare compartiment: pereți laterali vizibili (adâncime ~14px, umbră interioară), placa frontală retrasă. Pe nervurile de jos, mici decupaje în arc, ca în Imaginea 2.
+• Plăcile frontale (ModuleCardShell): placă ivoriu #e6e1d3 cu 4 șuruburi Phillips în colțuri (unghiuri diferite), contur gravat fin, serigrafie neagră (Courier Prime, majuscule mici). Sus-stânga: eticheta codului (MOD-01) pe bandă Dymo (navy, litere albe în relief, ușor strâmbă). Sus-dreapta: lampa de stare = lentilă rotundă într-un inel metalic (verde / chihlimbar / roșu pâlpâitor / stinsă), refolosind clasele hw-led-*.
+• Starea „sigilat” (modul blocat): înlocuiește blocarea actuală cu o placă de oțel închis, 2 șuruburi și o bandă de sigiliu din hârtie albă cu text roșu „SIGILAT · NU DESCHIDE”, pusă în diagonală. Textul existent („Compartiment Sigilat…”) rămâne vizibil. Când modulul devine activ: banda se rupe (animație 600ms: se desprinde și cade) și placa glisează.
+• Starea „dezamorsat”: ștampilă de cauciuc „DEZAMORSAT” (cerneală verde-închis, dublu contur, rotită −6°, mix-blend-mode: multiply) pe placă; lampa devine verde. Mesajul „DECRIPTARE REUȘITĂ — COORDONATE ACTUALIZATE” rămâne, ca bilet dactilografiat lipit cu bandă sub placă.
+• Fața de sus (baterii): capac metalic negru-albăstrui periat (#172030 → #0f1620), 2 șuruburi hexagonale; bateriile AA/D (BatteryBayHardware) într-un decupaj dreptunghiular. ESTE PUZZLE-CRITIC: numărul și tipul bateriilor trebuie numărabile fără echivoc.
+• Fața stângă (seria): autocolant alb tipărit (Courier Prime bold, cod de bare desenat din linii) cu seria. SerialBrassPlate se redesenează ca autocolant, păstrându-i API-ul și data-testid="casing-serial". PUZZLE-CRITIC: seria perfect lizibilă, mai ales ultima cifră.
+• Fața dreaptă (porturi): panou retras cu conectori reali (paralel, serial, DVI-D, PS/2, RJ45, RCA), cu etichete gravate sub fiecare. ConnectorPortsHardware și PortSvg păstrează data-testid="casing-ports" și tipurile de port. PUZZLE-CRITIC: portul paralel trebuie recunoscut imediat.
+• Spate și jos: decorative; jos 4 picioare de cauciuc; pe dreapta, 2 etichete de probă din hârtie manila legate cu ață, atârnând. Elimină mânerele laterale actuale (SideHandle). Un cablu negru iese din marginea dreaptă și se pierde spre alimentator (SVG, fără animație).
+• CasingSpecsView (lupa): re-stilizat ca o fotografie de dosar (hârtie, colțuri, ștampilă), cu aceleași date și aceleași data-testid.
+6. Modulele (UI), fără a atinge logica
+Re-stilizează UI-ul fiecărui modul din src/components/modules/*.tsx în hardware credibil, păstrând props, handlere și textele de joc. Text pe placă ivoriu = negru #15171a; text în ferestre/ecrane întunecate = luminos.
+• MOD-01 Memoria: afișaj cu o cifră în 7 segmente (SVG), 4 butoane arcade negre cu cifra pe etichetă albă dedesubt, 5 LED-uri mici pentru etapă.
+• MOD-02 Fire Complicate: fire izolate reale (manta răsucită pentru culorile cu dungi), capete cu cupru, LED-uri și stele ștampilate; tăierea = capete rupte cu cupru la vedere.
+• MOD-03 Cine e pe primul loc?: LCD mic cu fundal #1b2a12, 6 taste groase cu textul gravat.
+• MOD-04 Secvențele de Fire: panou cu borne cu șurub din alamă A/B/C, 2 butoane mari basculante sus/jos.
+• MOD-05 Labirintele: matrice 6×6 de LED-uri (ca în Imaginea 1) și 4 butoane arcade direcționale; pereții rămân invizibili ca acum.
+• MOD-06 Butonul Rotativ: buton metalic zimțat (CSS conic-gradient), 12 LED-uri, cronometru în 7 segmente, „UP” pe etichetă Dymo.
+• MOD-07 Parolele Secrete: tamburi mecanici cu litere (split-flap), butoane sus/jos, butonul „SUBMIT” cu garda galben-negru existentă.
+• AUX-08: cadran analogic rotund, față crem, ac negru, zonă roșie (ca în Imaginea 2); butoanele GPS și CARCASĂ ca întrerupătoare cu etichete Dymo; păstrează textele „RUTĂ GPS / RADAR / GPS SIGILAT”.
+• Antetul (bara de sus): bandă înghustă #0c0d0e. Stânga: placa cronometrului ca în Imaginea 2 (placă albă mică, 3 găuri rotunde pentru lămpile de eroare, cifre roșii cu 7 segmente MM:SS cu două puncte intermitente). ESTE butonul pentru cele 5 atingeri de admin. Centru: DISPOZITIV / GPS ca două butoane cu etichete Dymo. Dreapta: PWA și mute ca întrerupătoare mici. Păstrează data-testid="strike-counter" și numărul de greșeli afișat (ex. „ERR 0” pe placă).
+7. Stația radio (telefonul de teren)
+Aspect (Imaginea 1): walkie-talkie galben cu negru: corp #f1c40f cu cauciuc negru, antenă scurtă, LCD verde #1b2a12 cu text #9be15d (rețea de pixeli), tastatură gri 3×4, buton PTT lateral, LED mic sus (roșu când „transmite”, verde în rest). Desenat în SVG/CSS, cu muchii uzate, zgârieturi, lumină de la becul din stânga-sus. Stă pe masă, înclinat cu −12°, jos-dreapta; ~150px lățime pe desktop, ~110px pe mobil. Apare numai în vizualizarea „DISPOZITIV”, nu pe harta GPS.
+LCD: rândul 1 = canal („CH 03”), rândul 2 = mesaj; 3–4 bare de semnal care fluctuează aleator (de obicei 1–2); la 3 greșeli: 0 bare și „FĂRĂ SEMNAL”. Text în VT323. Fără animații continue când e inactivă.
+Subtitrare: lângă stație apare 3s un bilet de hârtie dactilografiat (Courier Prime) cu mesajul, ca să se înțeleagă și fără sunet sau fără voce în română. Atingerea stației repetă ultimul mesaj.
+Comportamentul principal (cerut): când jucătorul deschide un modul (focalizare), stația reacționează ca un semnal slab, care abia ajunge:
+1.  0.25s de „squelch”: zgomot alb filtrat bandpass 300–3000 Hz, atac brusc, descreștere.
+2.  Voce robotică, fragmentată: „mod … [static] … zero … [pocnet] … unu”, cu pauze de 120–350ms și rafale de static între cuvinte. Cuvintele rămân mereu inteligibile în ordinea lor; stricăciunea vine din pauze, static și, uneori, dintr-o repetare a unui cuvânt (probabilitate 15%).
+3.  Bip scurt de confirmare la sfârșit (880Hz, 80ms).
+4.  LCD: „MOD-01” tastat literă cu literă, cu „SEMNAL SLAB” clipind.
+5.  Stația tresaltă 6px, 300ms, iar LED-ul pâlpâie.
+Vocea: speechSynthesis cu SpeechSynthesisUtterance. Alege o voce ro-RO dacă există (getVoices() + evenimentul voiceschanged); pitch 0.1–0.35, rate 0.75–0.85, volume 0.9. Fără voce ro-RO: voce en-US și cuvintele „module zero one”. Fără nicio voce: doar static, bipuri și subtitrare. Cifrele în română: unu, doi, trei, patru, cinci, șase, șapte.
+Limită tehnică: speechSynthesis nu poate fi trecut prin filtre WebAudio. Aspectul de „radio” se obține prin fragmentare, static suprapus (un AudioContext propriu, nu cel din sound.ts), pitch coborât și bipuri.
+Gest de utilizator (iOS/Android): apelează radio.announceModule(id) DIRECT în handlerul onFocusModule din App.tsx (în interiorul click-ului), nu dintr-un useEffect. La onFocusModule(null) (zoom out) apelează radio.cancel() (oprește vocea imediat). Cooldown: dacă același modul e redeschis în mai puțin de 8s, doar un chirp scurt, fără voce.
+Mute: citește soundEngine.isMuted() (public, fără a modifica sound.ts). Când e mut, nu se aude nimic, dar LCD-ul și subtitrarea rămân.
+Alte evenimente (idei adăugate):
+• Modul dezamorsat: 3 bipuri ascendente + „mod zero unu … dezamorsat”, LCD „OK”.
+• Greșeală: rafală dură de static + „eroare”, LCD „ERR!” roșu pe 1s; la 2 și 3 greșeli staticul devine mai puternic, iar LCD-ul arată „SEMNAL INSTABIL”.
+• Ambient: la 40–90s, 1–2s de pârcăit slab și, rar, o replică fragmentată din lista RADIO_AMBIENT_LINES din config.ts (ex.: „…detectiv… mai ai… timp…”, „…aici… baza… mă auzi…”). Maxim o replică la 3 minute; oprit când tabul e ascuns sau când e mut.
+• Finalul: „dispozitiv neutralizat”.
+Funcțiile audio noi se pun în fișiere noi (src/utils/radio.ts, src/utils/ambience.ts); sound.ts nu se atinge.
+8. Introducerea: terminalul verde
+Faza 1 a aplicației. Ecran complet (fixed inset-0), peste restul.
+• Poarta de pornire (necesară pentru a debloca audio-ul): ecran negru cu un LED chihlimbar mic și textul [ APĂSĂ PENTRU A PORNI TERMINALUL ] (VT323, clipind lent). La atingere: sunet de pornire (bâzâit grav + „thunk” de degauss), animația de pornire CRT (o linie albă orizontală se extinde pe verticală în 350ms, cu un bliț de luminozitate), apoi fundalul verde.
+• Aspect: fundal verde de calculator vechi: radial-gradient(ellipse at center, #0b2a14 0%, #04130a 60%, #010603 100%); linii de scanare (repeating-linear-gradient(0deg, rgba(0,0,0,.28) 0 1px, transparent 1px 3px)); vignetă; colțuri rotunjite 22px cu umbră interioară (efect de ecran bombat); pâlpâire de 3–4% opacitate la 0.12s cu steps (dezactivată la reduced-motion). Text: VT323, clamp(20px, 2.4vw + 14px, 30px), line-height: 1.25, culoare #6dff8f, text-shadow: 0 0 6px rgba(57,255,106,.55), 0 0 18px rgba(57,255,106,.25) și un ușor decalaj cromatic (±1px roșu/albastru la 25%). Pe desktop coloana de text are maximum 760px, centrată.
+• Antet (tastat rapid, 8ms/caracter), configurabil în INTRO_HEADER_LINES: > TERMINAL SECURIZAT — DOSAR 03, > AUTENTIFICARE ... OK, > DESCHIDERE MESAJ ..., o linie goală, apoi mesajul.
+• Mesajul (în config.ts, export const INTRO_TEXT), exact cu acest conținut inițial (îl voi înlocui eu; păstrează ghilimelele și structura):
+  "[[AICI VA FI TEXTUL INTRODUCTIV — îl înlocuiesc eu ulterior]]"
+  Trebuie să suporte orice lungime, linii noi, rânduri goale și diacritice, fără alte modificări de cod când textul se schimbă.
+• Scrierea literă cu literă: acumulator de timp (nu setInterval imprecis). Întârziere de bază 38ms (INTRO_TYPING_MS în config) cu variație ±12ms; pauze: după . ! ? 320ms, după , ; : 140ms, după rând nou 220ms (rând gol 420ms). Cursor bloc █ clipind la 530ms (steps(1)), care rămâne la final. Un „tic” de tastă pe fiecare literă vizibilă (zgomot filtrat bandpass 1800Hz ±8%, 10ms, volum 0.02–0.035) prin ambience.ts, respectând mute-ul.
+• Derulare: containerul de text derulează automat în jos; butonul de confirmare stă într-o zonă fixă dedesubt, fără să acopere textul.
+• Sărire: o atingere pe text (sau Space/Enter) cât timp se scrie afișează instantaneu tot textul.
+• Butonul de confirmare: apare numai după ce tot textul e afișat: [ AM CITIT — ÎNCEP MISIUNEA ]. Chenar 2px solid #6dff8f, fundal transparent, la hover/active se inversează (fundal verde, text negru), înălțime ≥ 52px, focus vizibil, aria-label. La apăsare: sunet „Enter” + animația de oprire CRT (ecranul se strânge vertical într-o linie, apoi într-un punct care se stinge, 450ms), apoi negru 300ms.
+• Persistență: după confirmare se salvează op3ani_intro_seen_v1 = '1' (cheie separată de starea jocului). Introducerea apare doar la prima deschidere. Parametrul URL ?intro=1 o forțează, ?intro=0 o săre (pentru testare).
+• Reducere mișcare: textul apare instant, fără pâlpâire și fără animația de pornire/oprire.
+9. Animația camerei: detectivul intră și se așează la masă
+Faza 2, imediat după terminal. Componente: IntroRoomCutscene + DetectiveSilhouette. Se desfășoară pe aceeași scenă ca jocul (RoomBackdrop), în vedere laterală, „în secțiune”. La final camera se apropie de masă și se face fade în jocul real, deja montat dedesubt.
+Personajul (DetectiveSilhouette, SVG): siluetă noir, FĂRĂ trăsături faciale: pălărie fedora cu boruri, trenci cu guler ridicat și cordon, pantofi. Umplere #07080a, linie de lumină (rim light) #e9c98a la 35%, 1.5px, pe partea dinspre sursa de lumină. Înălțime ~420 unități într-un viewBox 200×420. Piese ca grupuri <g> cu pivot la articulații: cap+pălărie, trunchi, 2 brațe (umăr, cot), 2 picioare (șold, genunchi). Prop pose: walk | stand | lookLeft | lookRight | sit | exhale | wipeBrow | tipHat.
+• Mers: picioare ±22°, brațe ±14° în antifază, trunchi urcă/coboară 3px, perioadă 0.55s.
+• Privit stânga/dreapta: capul se rotește ±12° și pălăria se oglindește (scaleX) la întoarcere; pauză 0.6s la fiecare.
+• Așezat: picioarele se îndoaie la 90°, trunchiul se înclină 6° spre masă; scaunul din lemn e desenat separat și intră sub masă.
+• Umbra: elipsă moale sub picioare + umbră lungă pe podea (skewX) dinspre lumina ușii.
+• Animația se face cu biblioteca motion (deja instalată), nu cu imagini.
+Camera abandonată (în plus față de RoomBackdrop): podea din scânduri cu rosturi, bucăți de tencuială, o pânză de păianjen în colț (linii SVG fine), cabluri atârnând din tavan, un scaun răsturnat în fundal, ușa de lemn închisă la stânga (panou cu vopsea scorojită, clanță de alamă, lumină rece în prag).
+Cronologie (≈14s; buton „Sari peste ▸▸” discret, jos-dreapta, apare după 1.5s):
+• 0.0–0.8s: negru; zgomot de fundal foarte slab (vânt, un picur).
+• 0.8–1.8s: ușa scârțâie și se deschide (panoul se rotește în rotateY), un trapez de lumină rece cade pe podea.
+• 1.8–2.6s: apare silueta în prag, în contralumină.
+• 2.6–5.0s: intră (6 pași, pași sincronizați cu sunetul de tălpi).
+• 5.0–7.0s: se oprește în mijlocul camerei; se uită la stânga, pauză, la dreapta, pauză; împinge pălăria pe spate.
+• 7.0–7.8s: ușa se închide în urma lui (bufnitură înfundată), lumina rece dispare; becul de deasupra mesei se aprinde (clic + bâzâit + 2 pâlpâiri) și luminează masa cu dispozitivul și stația radio.
+• 7.8–10.5s: merge la scaun, îl trage (zgomot de scrijelit), se așează.
+• 10.5–11.5s: stația radio pârcăie scurt, LCD-ul se aprinde: „CH 03 · SEMNAL SLAB”.
+• 11.5–13.5s: camera se apropie de masă (scale 1 → 1.6, translatare spre dispozitiv), silueta iese din cadru, fade în scena de joc.
+• Pe portret nu se micșorează scena: camera panoramează orizontal după personaj (viewBox 1600×900, preserveAspectRatio="xMidYMax slice", translatare animată de la ușă la masă).
+• Sunete (toate sintetizate în ambience.ts, volum mic, mute respectat): scârțâit de ușă (sawtooth 90→140→70Hz, lowpass 600Hz, tremolo, 1.1s), pași (zgomot lowpass 60ms + sinus 70Hz), scaun (zgomot bandpass 400–900Hz cu baleiaj, 0.5s), bec (clic + bâzâit 100Hz cu intrare lentă).
+• Cronometrul jocului NU curge în timpul acestei faze.
+10. Finalul: clipul-premiu
+Declanșare: când state.victory devine true în sesiunea curentă (confirmarea sosirii finale sau declanșarea din Panoul de Administrator). La încărcarea paginii cu victory deja true se sare direct la VictoryScreen.
+Secvența (componenta FinaleSequence, randată ÎNAINTEA lui VictoryScreen, care rămâne neatins):
+1.  0–3s: scena de joc. Toate lămpile modulelor sunt verzi, becul devine stabil și mai cald (tensiunea la 0), vignetă mai lejeră. Camera se retrage (invers față de introducere) până la planul larg cu detectivul așezat. Stația: bipuri + „dispozitiv neutralizat”.
+2.  3–6s: detectivul se ridică (scaun scrijelit), expiră lung, ușurat: 3 pufuri de abur/fum moale care urcă și se disipă (cercuri semitransparente cu blur mic, doar transform/opacity), sunet de expirație (zgomot lowpass 1200Hz, 0.9s, volum 0.05). Își șterge fruntea cu brațul, își îndreaptă pălăria și dă din cap mulțumit.
+3.  6–9s: merge spre ușă și o deschide: dincolo e lumină caldă de dimineață (#fff1c9), în contrast cu camera rece. Iese; lumina crește până umple ecranul (bloom auriu), ușa rămâne întredeschisă.
+4.  Clipul: din bloom, fade în „ecranul de proiecție”: cadru vechi (ramă de alamă/lemn sau bandă de peliculiă pe margini), eticheta „PREMIU — DOSAR 03”, video centrat. Butonul mare ▶ Redare (necesar pentru sunet pe mobil), apoi <video> cu controls, playsInline, preload="metadata", controlsList="nodownload". Sursa vine din config.ts: FINALE_VIDEO_SRC = '/assets/clip-final.mp4' și FINALE_VIDEO_POSTER = null. Dacă fișierul lipsește sau dă eroare: mesaj discret „Clipul nu a putut fi încărcat”, cu butonul Continuă. Lasă un comentariu în cod: recomandat MP4 H.264 + AAC, 720p, sub 40MB. Nu îl include în precache-ul PWA.
+5.  După clip (ended) sau la apăsarea „Sari peste clip ▸▸” (mereu vizibilă): fade în VictoryScreen-ul existent, neschimbat.
+6.  Peste VictoryScreen randează un buton mic, plutitor, „▶ Revezi clipul” (stil Dymo, z-index mai mare de 1200), care redeschide clipul.
+Cronometrul rămâne oprit. Confetti-ul și fanfara din VictoryScreen rămân cum sunt.
+11. Fișiere noi și modificări permise
+Fișiere noi:
+• src/components/room/RoomBackdrop.tsx, src/components/room/DetectiveSilhouette.tsx
+• src/components/intro/IntroTerminal.tsx, src/components/intro/IntroRoomCutscene.tsx
+• src/components/finale/FinaleSequence.tsx
+• src/components/RadioHandset.tsx, src/components/SevenSegmentDisplay.tsx
+• src/utils/radio.ts, src/utils/ambience.ts, src/hooks/usePrefersReducedMotion.ts
+Adăugiri în src/config.ts (fără a schimba valorile existente): INTRO_TEXT, INTRO_HEADER_LINES, INTRO_TYPING_MS, RADIO_AMBIENT_LINES, FINALE_VIDEO_SRC, FINALE_VIDEO_POSTER, INTRO_SEEN_KEY.
+Modificări permise în fișiere existente: App.tsx (faze + markup + apeluri radio), Bomb3DScene.tsx, ModuleCardShell.tsx, modules/*.tsx, CasingSpecsView.tsx, index.css, index.html (fonturi, theme-color #050606), vite.config.ts (doar theme_color / background_color din manifest), OfflineIndicator.tsx și PWAInstallButton.tsx (doar aspectul).
+Mașina de faze în App.tsx: appPhase: 'gate' | 'terminal' | 'cutscene' | 'game'. Inițial game dacă INTRO_SEEN_KEY există sau URL-ul are ?intro=0; altfel gate → terminal → cutscene → game. Scena de joc e montată deja din faza cutscene (sub ea), ca fade-ul final să fie continuu. handleAdminReset (deci și „Joacă din nou”) șterge INTRO_SEEN_KEY și duce aplicația înapoi în gate, pe lângă ce face acum. Cronometrul curge doar când appPhase === 'game' și !state.victory.
+Apeluri radio adăugate la finalul handlerelor existente, fără a le schimba logica: onFocusModule (anunț modul / cancel), handleModuleSolved (modul dezamorsat), registerStrike (greșeală + nivel de tensiune), handleConfirmFinalArrival (final). Ambientul pornește la intrarea în faza game.
+12. Performanță, lizibilitate, compatibilitate
+• Țintă: 60fps pe un telefon Android de gamă medie și pe iPhone. Animezi doar transform și opacity; fără filter: blur pe zone mari în contextul 3D; fără animarea box-shadow; will-change doar pe elementele care se mișcă; zgomotul de film ca tile mic; fără filtre SVG live pe carcasă.
+• Verifică dimensiunile: 390×844, 360×740, 844×390 (landscape telefon), 1440×900. Respectă env(safe-area-inset-*) (viewport-fit=cover) și 100dvh.
+• Ținte tactile ≥ 44px. Text minim 12px. Contrast puzzle ≥ 4.5:1.
+• Toate elementele interactive au aria-label în română și focus vizibil; animațiile decorative sunt aria-hidden.
+• Orice sunet nou: volum mic (maximum 0.18), respectă mute-ul, se oprește când tabul e ascuns (visibilitychange), se curăță la demontare.
+• Fără console.error/avertismente React, fără chei lipsă, fără memory leaks (curăță timerele, speechSynthesis.cancel(), AudioContext).
+13. Etape de lucru și verificare
+Etapele (build verde la finalul fiecăreia):
+1.  Fundație: fonturi locale, token-uri de design, index.css re-stilizat (cu clasele vechi păstrate), RoomBackdrop cu lumină, perete, masă, obiecte; App.tsx pe scena nouă.
+2.  Carcasa: Bomb3DScene, ModuleCardShell, CasingSpecsView, antetul cu placa cronometrului și SevenSegmentDisplay.
+3.  Modulele (1–7 + AUX-08), pe rând.
+4.  Stația radio + radio.ts + ambience.ts + integrarea în App.tsx.
+5.  Introducerea (poartă + terminal) și mașina de faze.
+6.  Animația camerei cu detectivul.
+7.  Finalul + clipul + „Revezi clipul”.
+8.  Curățenie și verificare finală.

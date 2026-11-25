@@ -1,34 +1,75 @@
 @import "tailwindcss";
 
 :root {
-  --bench-bg: #0b0a09;
-  --steel-top: #26292d;
-  --steel-mid: #1a1d20;
-  --steel-bot: #111315;
-  --bakelite: #101012;
-  --brass-hi: #8c6f3e;
-  --brass-mid: #614b26;
-  --brass-lo: #3b2d15;
-  --phosphor-green: #6ee7b7;
-  --nixie-amber: #ff9824;
-  --nixie-red: #ff4518;
+  /* Noir Detective Room & Hardware Tokens */
+  --noir-black: #050606;
+  --noir-deep: #0a0d0c;
+  --noir-wall: #141a17;
+  --noir-wallpaper: #1b221e;
+  --lamp-core: #ffd9a0;
+  --lamp-edge: #e8b66f;
+  --window-cold: rgba(127, 155, 184, 0.08);
+
+  --cloth-light: #d9d3c4;
+  --cloth-mid: #8a8576;
+  --cloth-shadow: #3a382f;
+  --cloth-lace: #bdb6a4;
+
+  --shell-front: #c2c4bf;
+  --shell-top: #d0d1cc;
+  --shell-left: #a9aba6;
+  --shell-right: #9fa19c;
+  --shell-shadow: #6d6f6b;
+  --lid-top-a: #172030;
+  --lid-top-b: #0f1620;
+
+  --ivory-plate: #e6e1d3;
+  --ink-black: #15171a;
+  --dymo-navy: #101a2b;
+  --dymo-text: #eceae2;
+
+  --alarm-red: #c0281c;
+  --led-red: #ff3b2a;
+  --led-green: #3ddc84;
+  --led-amber: #e89b2d;
+
+  --radio-yellow: #f1c40f;
+  --radio-black: #17181a;
+  --radio-lcd-bg: #1b2a12;
+  --radio-lcd-fg: #9be15d;
+
+  --term-bg-in: #0b2a14;
+  --term-bg-out: #04130a;
+  --term-fg: #6dff8f;
+
   --tension-heat: 0;
   --alert-pulse-speed: 1.15s;
+  --lamp-sway-deg: 0.6deg;
+  --lamp-sway-dur: 7s;
+  --cone-opacity: 0.19;
 }
 
 [data-tension="1"] {
-  --tension-heat: 0.25;
-  --alert-pulse-speed: 0.88s;
+  --tension-heat: 0.3;
+  --alert-pulse-speed: 0.85s;
+  --lamp-sway-deg: 0.85deg;
+  --cone-opacity: 0.2;
 }
 
 [data-tension="2"] {
-  --tension-heat: 0.55;
-  --alert-pulse-speed: 0.62s;
+  --tension-heat: 0.65;
+  --alert-pulse-speed: 0.58s;
+  --lamp-sway-deg: 1.35deg;
+  --lamp-sway-dur: 5.2s;
+  --cone-opacity: 0.22;
 }
 
 [data-tension="3"] {
-  --tension-heat: 0.9;
-  --alert-pulse-speed: 0.42s;
+  --tension-heat: 0.95;
+  --alert-pulse-speed: 0.38s;
+  --lamp-sway-deg: 1.85deg;
+  --lamp-sway-dur: 4.1s;
+  --cone-opacity: 0.24;
 }
 
 * {
@@ -37,151 +78,122 @@
 
 html,
 body {
-  background-color: #090908;
-  color: #e5e2dc;
-  font-family: 'Chakra Petch', system-ui, sans-serif;
+  background-color: #050606;
+  color: #e6e1d3;
+  font-family: 'Courier Prime', 'Courier New', monospace;
   overscroll-behavior-y: contain;
 }
 
+/* ============================================================================
+   TYPOGRAPHY MAPPING (Self-hosted Oswald, Courier Prime, VT323)
+   ============================================================================ */
 .font-display {
-  font-family: 'Chakra Petch', system-ui, sans-serif;
-}
-
-.font-lcd {
-  font-family: 'Share Tech Mono', monospace;
-  font-variant-numeric: tabular-nums;
+  font-family: 'Oswald', 'Arial Narrow', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .font-tech {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.font-lcd {
+  font-family: 'VT323', 'Courier Prime', monospace;
   font-variant-numeric: tabular-nums;
 }
 
 /* ============================================================================
-   WORKBENCH ENVIRONMENT & TOP-LEFT DIRECTIONAL LIGHTING
+   SHARED PROTECTED SCREEN CLASSES (AdminModal, GpsRadarView, VictoryScreen, PWA)
+   Kept dark-noir charcoal/steel so white/amber/emerald text stays high-contrast
    ============================================================================ */
 .workbench-bg {
-  background-color: #0b0a09;
+  background-color: #050606;
   background-image:
-    radial-gradient(ellipse 90% 65% at 18% 12%, rgba(255, 224, 178, 0.085), transparent 62%),
-    radial-gradient(ellipse 75% 70% at 85% 90%, rgba(0, 0, 0, 0.85), transparent 70%),
-    radial-gradient(circle at 50% 50%, rgba(168, 42, 18, calc(0.06 * var(--tension-heat))), transparent 72%),
+    radial-gradient(ellipse 85% 60% at 32% 18%, rgba(255, 217, 160, 0.07), transparent 65%),
+    radial-gradient(circle at 50% 50%, rgba(192, 40, 28, calc(0.08 * var(--tension-heat))), transparent 75%);
+}
+
+.metal-micrograin {
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 0),
+    radial-gradient(rgba(0, 0, 0, 0.32) 1px, transparent 0);
+  background-size: 5px 5px, 3px 3px;
+  background-position: 0 0, 2px 1px;
+}
+
+.chassis-plate {
+  background:
+    linear-gradient(155deg, rgba(255, 240, 215, 0.045) 0%, transparent 38%, rgba(0, 0, 0, 0.36) 100%),
+    linear-gradient(175deg, #212426 0%, #17191b 52%, #101213 100%);
+  border-radius: 2px;
+  border-top: 2px solid #3a3e42;
+  border-left: 2px solid #303438;
+  border-right: 2px solid #0b0c0d;
+  border-bottom: 2px solid #070809;
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 248, 232, 0.06),
+    inset -2px -2px 0 rgba(0, 0, 0, 0.72),
+    6px 12px 26px rgba(0, 0, 0, 0.82);
+}
+
+.recessed-bay {
+  background:
+    linear-gradient(165deg, #0d0f10 0%, #141718 55%, #090a0b 100%);
+  border-radius: 2px;
+  border: 2px solid #090a0b;
+  outline: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow:
+    inset 3px 5px 14px rgba(0, 0, 0, 0.9),
+    inset -1px -1px 6px rgba(255, 255, 255, 0.025);
+}
+
+.bakelite-surface {
+  background-color: #131416;
+  background-image:
+    linear-gradient(145deg, rgba(255, 245, 225, 0.035) 0%, transparent 45%),
     repeating-linear-gradient(
       90deg,
       rgba(255, 255, 255, 0.012) 0px,
       rgba(255, 255, 255, 0.012) 1px,
       transparent 1px,
-      transparent 6px
-    ),
-    repeating-linear-gradient(
-      0deg,
-      rgba(0, 0, 0, 0.28) 0px,
-      rgba(0, 0, 0, 0.28) 2px,
-      transparent 2px,
-      transparent 48px
-    );
-}
-
-/* Fine powder-coat / brushed metal micro-grain */
-.metal-micrograin {
-  background-image:
-    radial-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 0),
-    radial-gradient(rgba(0, 0, 0, 0.35) 1px, transparent 0);
-  background-size: 5px 5px, 3px 3px;
-  background-position: 0 0, 2px 1px;
-}
-
-/* Heavy beveled electrostatic-painted steel chassis plate (sharp 3px machined corners) */
-.chassis-plate {
-  background:
-    linear-gradient(140deg, rgba(255, 255, 255, 0.065) 0%, transparent 36%, rgba(0, 0, 0, 0.32) 100%),
-    linear-gradient(170deg, var(--steel-top) 0%, var(--steel-mid) 48%, var(--steel-bot) 100%);
-  border-radius: 3px;
-  border-top: 2px solid #444950;
-  border-left: 2px solid #3c4148;
-  border-right: 2px solid #121417;
-  border-bottom: 2px solid #0b0c0e;
-  box-shadow:
-    inset 1px 1px 0 rgba(255, 255, 255, 0.08),
-    inset -2px -2px 0 rgba(0, 0, 0, 0.72),
-    8px 14px 28px rgba(0, 0, 0, 0.78);
-}
-
-/* Deep recessed metal compartment bay with dark rubber gasket rim */
-.recessed-bay {
-  background:
-    radial-gradient(
-      circle at 50% 45%,
-      rgba(155, 38, 15, calc(0.11 * var(--tension-heat))),
-      transparent 75%
-    ),
-    linear-gradient(160deg, #0d0e10 0%, #141619 55%, #090a0b 100%);
-  border-radius: 2px;
-  border: 2px solid #090a0c;
-  outline: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow:
-    inset 4px 6px 16px rgba(0, 0, 0, 0.94),
-    inset -2px -2px 8px rgba(255, 255, 255, 0.03),
-    0 1px 0 rgba(255, 255, 255, 0.07);
-}
-
-/* Carbon / Bakelite ribbed sub-plate */
-.bakelite-surface {
-  background-color: #101113;
-  background-image:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.04) 0%, transparent 45%),
-    repeating-linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.015) 0px,
-      rgba(255, 255, 255, 0.015) 1px,
-      transparent 1px,
       transparent 4px
     );
   border-radius: 2px;
-  border-top: 1px solid #2c2f34;
-  border-left: 1px solid #26292d;
-  border-right: 1px solid #070809;
-  border-bottom: 1px solid #050506;
+  border-top: 1px solid #2b2d30;
+  border-left: 1px solid #232528;
+  border-right: 1px solid #060708;
+  border-bottom: 1px solid #040405;
   box-shadow:
-    inset 0 2px 8px rgba(0, 0, 0, 0.85),
-    2px 3px 8px rgba(0, 0, 0, 0.6);
+    inset 0 2px 6px rgba(0, 0, 0, 0.8),
+    2px 3px 6px rgba(0, 0, 0, 0.6);
 }
 
-/* Oxidized brass engraved technical plaque */
 .brass-plaque {
   background:
-    linear-gradient(135deg, rgba(255, 232, 185, 0.16) 0%, transparent 45%, rgba(0, 0, 0, 0.4) 100%),
-    linear-gradient(180deg, var(--brass-hi) 0%, var(--brass-mid) 52%, var(--brass-lo) 100%);
+    linear-gradient(135deg, rgba(255, 238, 198, 0.14) 0%, transparent 45%, rgba(0, 0, 0, 0.35) 100%),
+    linear-gradient(180deg, #75623d 0%, #524327 52%, #332917 100%);
   border-radius: 2px;
-  border-top: 1px solid #b59254;
-  border-left: 1px solid #9d7d45;
-  border-right: 1px solid #291f0e;
-  border-bottom: 1px solid #1e1609;
+  border-top: 1px solid #968053;
+  border-left: 1px solid #826e45;
+  border-right: 1px solid #21190c;
+  border-bottom: 1px solid #171108;
   box-shadow:
-    inset 0 1px 0 rgba(255, 240, 200, 0.25),
-    2px 3px 6px rgba(0, 0, 0, 0.72);
-  text-shadow: 0 1px 0 rgba(255, 235, 190, 0.18), 0 -1px 0 rgba(0, 0, 0, 0.8);
+    inset 0 1px 0 rgba(255, 244, 214, 0.2),
+    1px 2px 5px rgba(0, 0, 0, 0.7);
 }
 
-/* Recessed CRT / Oscilloscope Phosphor Glass */
 .crt-phosphor-glass {
   position: relative;
-  background:
-    radial-gradient(
-      circle at 50% 50%,
-      rgba(15, 58, 38, 0.95) 0%,
-      rgba(7, 29, 20, 0.98) 68%,
-      #030f0a 100%
-    );
+  background: radial-gradient(circle at 50% 50%, #1b2a12 0%, #0d1909 70%, #050b03 100%);
   border-radius: 2px;
-  border-top: 2px solid #070908;
-  border-left: 2px solid #070908;
-  border-right: 2px solid #2b332e;
-  border-bottom: 2px solid #303833;
+  border-top: 2px solid #060807;
+  border-left: 2px solid #060807;
+  border-right: 2px solid #2d342b;
+  border-bottom: 2px solid #353d32;
   box-shadow:
-    inset 4px 6px 18px rgba(0, 0, 0, 0.95),
-    inset 0 0 24px rgba(52, 211, 153, 0.12),
-    0 1px 0 rgba(255, 255, 255, 0.08);
+    inset 3px 5px 14px rgba(0, 0, 0, 0.92),
+    inset 0 0 18px rgba(109, 255, 143, 0.08);
 }
 
 .crt-phosphor-glass::before {
@@ -190,36 +202,26 @@ body {
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(128deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 26%, transparent 48%),
+    linear-gradient(130deg, rgba(255, 255, 255, 0.06) 0%, transparent 42%),
     repeating-linear-gradient(
       0deg,
-      rgba(0, 0, 0, 0.26) 0px,
-      rgba(0, 0, 0, 0.26) 1px,
+      rgba(0, 0, 0, 0.24) 0px,
+      rgba(0, 0, 0, 0.24) 1px,
       transparent 1px,
       transparent 3px
     );
   z-index: 5;
 }
 
-/* Warm Amber/Red CRT / Nixie Tube Housing */
 .crt-amber-glass {
   position: relative;
-  background:
-    radial-gradient(
-      circle at 50% 50%,
-      rgba(42, 22, 8, 0.95) 0%,
-      rgba(22, 11, 4, 0.98) 70%,
-      #0c0602 100%
-    );
+  background: radial-gradient(circle at 50% 50%, #241309 0%, #140a04 72%, #080402 100%);
   border-radius: 2px;
-  border-top: 2px solid #070504;
-  border-left: 2px solid #070504;
-  border-right: 2px solid #332920;
-  border-bottom: 2px solid #382c22;
-  box-shadow:
-    inset 4px 6px 16px rgba(0, 0, 0, 0.95),
-    inset 0 0 22px rgba(255, 130, 30, calc(0.14 + 0.14 * var(--tension-heat))),
-    0 1px 0 rgba(255, 255, 255, 0.08);
+  border-top: 2px solid #060403;
+  border-left: 2px solid #060403;
+  border-right: 2px solid #302820;
+  border-bottom: 2px solid #382e25;
+  box-shadow: inset 3px 4px 12px rgba(0, 0, 0, 0.92);
 }
 
 .crt-amber-glass::before {
@@ -227,133 +229,100 @@ body {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background:
-    linear-gradient(128deg, rgba(255, 240, 215, 0.07) 0%, transparent 44%),
-    repeating-linear-gradient(
-      0deg,
-      rgba(0, 0, 0, 0.25) 0px,
-      rgba(0, 0, 0, 0.25) 1px,
-      transparent 1px,
-      transparent 3px
-    );
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.22) 0px,
+    rgba(0, 0, 0, 0.22) 1px,
+    transparent 1px,
+    transparent 3px
+  );
   z-index: 5;
 }
 
 .nixie-tube {
-  color: #ff9c2a;
-  text-shadow:
-    0 0 6px rgba(255, 120, 20, 0.85),
-    0 0 16px rgba(255, 72, 16, calc(0.45 + 0.35 * var(--tension-heat)));
+  color: #e89b2d;
+  text-shadow: 0 0 6px rgba(232, 155, 45, 0.45);
 }
 
 .nixie-tube-red {
-  color: #ff5938;
-  text-shadow:
-    0 0 7px rgba(255, 65, 35, 0.9),
-    0 0 18px rgba(220, 38, 38, 0.55);
+  color: #ff3b2a;
+  text-shadow: 0 0 7px rgba(255, 59, 42, 0.55);
 }
 
 .phosphor-text {
-  color: #7bf1a8;
-  text-shadow: 0 0 8px rgba(52, 211, 153, 0.55);
+  color: #9be15d;
+  text-shadow: 0 0 6px rgba(109, 255, 143, 0.4);
 }
 
-/* ============================================================================
-   MECHANICAL SWITCHES, KEYS & BEZELS (HIGH TRAVEL, DIRECTIONAL SHADOWS)
-   ============================================================================ */
 .mech-key {
   position: relative;
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.09) 0%, transparent 50%),
-    linear-gradient(180deg, #2c3036 0%, #1d2024 85%, #16181b 100%);
+  background: linear-gradient(180deg, #2b2e31 0%, #1c1e21 86%, #141618 100%);
   border-radius: 2px;
-  border-top: 2px solid #4d535c;
-  border-left: 2px solid #424750;
-  border-right: 2px solid #0e1012;
-  border-bottom: 2px solid #090a0c;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    2px 4px 0 #08090b,
-    4px 7px 12px rgba(0, 0, 0, 0.72);
-  transition: transform 80ms linear, box-shadow 80ms linear, background 120ms linear;
-}
-
-.mech-key:hover:not(:disabled) {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.13) 0%, transparent 50%),
-    linear-gradient(180deg, #353a41 0%, #23272c 100%);
+  border-top: 2px solid #484c52;
+  border-left: 2px solid #3c4045;
+  border-right: 2px solid #0d0e0f;
+  border-bottom: 2px solid #08090a;
+  box-shadow: 2px 3px 0 #070809, 3px 5px 10px rgba(0, 0, 0, 0.72);
+  transition: transform 80ms linear, box-shadow 80ms linear;
 }
 
 .mech-key:active:not(:disabled) {
-  transform: translate(1px, 3px);
-  box-shadow:
-    inset 2px 3px 6px rgba(0, 0, 0, 0.72),
-    1px 1px 0 #08090b,
-    1px 2px 4px rgba(0, 0, 0, 0.6);
+  transform: translate(1px, 2px);
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.72), 0 1px 0 #070809;
 }
 
 .mech-key-bakelite {
   position: relative;
-  background:
-    linear-gradient(145deg, rgba(255, 248, 235, 0.08) 0%, transparent 45%),
-    linear-gradient(180deg, #212022 0%, #131214 90%, #0b0b0c 100%);
+  background: linear-gradient(180deg, #1f1f21 0%, #121214 90%, #09090a 100%);
   border-radius: 2px;
-  border-top: 2px solid #3d3b3e;
-  border-left: 2px solid #323033;
-  border-right: 2px solid #070708;
-  border-bottom: 2px solid #040405;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.11),
-    2px 4px 0 #060607,
-    3px 6px 10px rgba(0, 0, 0, 0.78);
+  border-top: 2px solid #3a3a3d;
+  border-left: 2px solid #2e2e31;
+  border-right: 2px solid #050506;
+  border-bottom: 2px solid #030304;
+  box-shadow: 2px 3px 0 #050506, 3px 5px 8px rgba(0, 0, 0, 0.78);
   transition: transform 80ms linear, box-shadow 80ms linear;
 }
 
 .mech-key-bakelite:active:not(:disabled) {
-  transform: translate(1px, 3px);
-  box-shadow:
-    inset 2px 3px 6px rgba(0, 0, 0, 0.8),
-    0 1px 0 #060607;
+  transform: translate(1px, 2px);
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.8), 0 1px 0 #050506;
 }
 
 .mech-toggle {
-  background: linear-gradient(180deg, #26292e 0%, #17191c 100%);
+  background: linear-gradient(180deg, #24272a 0%, #16181a 100%);
   border-radius: 2px;
-  border-top: 1px solid #444a52;
-  border-left: 1px solid #3a3f46;
-  border-right: 1px solid #0d0e10;
+  border-top: 1px solid #3f4348;
+  border-left: 1px solid #34383d;
+  border-right: 1px solid #0c0d0e;
   border-bottom: 1px solid #070809;
-  box-shadow: 2px 3px 0 #08090a, 3px 5px 8px rgba(0, 0, 0, 0.65);
-  transition: transform 80ms linear, background 120ms linear;
+  box-shadow: 1px 2px 0 #070809, 2px 4px 6px rgba(0, 0, 0, 0.65);
+  transition: transform 80ms linear;
 }
 
 .mech-toggle:active:not(:disabled) {
-  transform: translateY(2px);
-  box-shadow: 0 1px 0 #08090a;
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 #070809;
 }
 
-/* Industrial hazard caution strip */
 .hw-hazard-stripe {
   background: repeating-linear-gradient(
     -45deg,
-    #c98212,
-    #c98212 8px,
-    #111214 8px,
-    #111214 16px
+    #d69e18,
+    #d69e18 8px,
+    #141517 8px,
+    #141517 16px
   );
   border-radius: 2px;
 }
 
-/* ============================================================================
-   GLASS INDICATOR BULBS / LEDs IN MACHINED COLLARS
-   ============================================================================ */
+/* LED Domes inside Machined Collar */
 .hw-led-dome {
   position: relative;
   border-radius: 9999px;
-  border: 2px solid #2b2e33;
+  border: 2px solid #37393b;
   box-shadow:
-    inset 0 -2px 4px rgba(0, 0, 0, 0.75),
-    1px 2px 4px rgba(0, 0, 0, 0.8);
+    inset 0 -2px 3px rgba(0, 0, 0, 0.72),
+    1px 1px 3px rgba(0, 0, 0, 0.75);
 }
 
 .hw-led-dome::after {
@@ -369,43 +338,394 @@ body {
 }
 
 .hw-led-off {
-  background: radial-gradient(circle at 35% 35%, #2f3338 0%, #121315 80%);
+  background: radial-gradient(circle at 35% 35%, #383a3d 0%, #141517 80%);
 }
 
 .hw-led-red-pulse {
-  background: radial-gradient(circle at 35% 35%, #fecaca 0%, #dc2626 48%, #450a0a 100%);
-  box-shadow:
-    0 0 10px rgba(220, 38, 38, 0.85),
-    inset 0 -2px 3px rgba(0, 0, 0, 0.5),
-    1px 2px 4px rgba(0, 0, 0, 0.8);
+  background: radial-gradient(circle at 35% 35%, #ffb4ad 0%, #ff3b2a 50%, #5a120c 100%);
+  box-shadow: 0 0 8px rgba(255, 59, 42, 0.78), inset 0 -2px 3px rgba(0, 0, 0, 0.45);
   animation: led-pulse-red var(--alert-pulse-speed) ease-in-out infinite;
 }
 
 .hw-led-green {
-  background: radial-gradient(circle at 35% 35%, #d1fae5 0%, #10b981 48%, #042f22 100%);
-  box-shadow:
-    0 0 12px rgba(16, 185, 129, 0.85),
-    inset 0 -2px 3px rgba(0, 0, 0, 0.45),
-    1px 2px 4px rgba(0, 0, 0, 0.8);
+  background: radial-gradient(circle at 35% 35%, #c4ffe0 0%, #3ddc84 52%, #0a4222 100%);
+  box-shadow: 0 0 8px rgba(61, 220, 132, 0.72), inset 0 -2px 3px rgba(0, 0, 0, 0.4);
 }
 
 .hw-led-amber {
-  background: radial-gradient(circle at 35% 35%, #fef3c7 0%, #d97706 50%, #451a03 100%);
-  box-shadow:
-    0 0 10px rgba(217, 119, 6, 0.8),
-    inset 0 -2px 3px rgba(0, 0, 0, 0.45),
-    1px 2px 4px rgba(0, 0, 0, 0.8);
+  background: radial-gradient(circle at 35% 35%, #ffebc2 0%, #e89b2d 52%, #593607 100%);
+  box-shadow: 0 0 8px rgba(232, 155, 45, 0.7), inset 0 -2px 3px rgba(0, 0, 0, 0.4);
 }
 
 @keyframes led-pulse-red {
-  0%, 100% {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+/* ============================================================================
+   NOIR ROOM, FILM GRAIN, LAMP SWAY & TABLECLOTH (det-* prefix)
+   ============================================================================ */
+.det-wallpaper {
+  background-color: #141a17;
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      #1b221e 0px,
+      #1b221e 11px,
+      #141a17 11px,
+      #141a17 24px
+    );
+}
+
+@keyframes det-grain-shift {
+  0% { transform: translate3d(0, 0, 0); }
+  25% { transform: translate3d(-14px, 9px, 0); }
+  50% { transform: translate3d(10px, -12px, 0); }
+  75% { transform: translate3d(-8px, -6px, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+/* Small tile PNG-like monochrome SVG noise data URI, stepped in 4 frames */
+.det-film-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' fill='none'/%3E%3Cg fill='%23ffffff' fill-opacity='0.22'%3E%3Crect x='4' y='7' width='1' height='1'/%3E%3Crect x='19' y='3' width='1' height='1'/%3E%3Crect x='34' y='15' width='1' height='1'/%3E%3Crect x='51' y='11' width='1' height='1'/%3E%3Crect x='77' y='19' width='1' height='1'/%3E%3Crect x='12' y='28' width='1' height='1'/%3E%3Crect x='43' y='33' width='1' height='1'/%3E%3Crect x='66' y='27' width='1' height='1'/%3E%3Crect x='89' y='38' width='1' height='1'/%3E%3Crect x='7' y='49' width='1' height='1'/%3E%3Crect x='29' y='54' width='1' height='1'/%3E%3Crect x='58' y='46' width='1' height='1'/%3E%3Crect x='81' y='61' width='1' height='1'/%3E%3Crect x='16' y='72' width='1' height='1'/%3E%3Crect x='39' y='68' width='1' height='1'/%3E%3Crect x='63' y='79' width='1' height='1'/%3E%3Crect x='87' y='88' width='1' height='1'/%3E%3Crect x='25' y='90' width='1' height='1'/%3E%3C/g%3E%3Cg fill='%23000000' fill-opacity='0.35'%3E%3Crect x='9' y='14' width='1' height='1'/%3E%3Crect x='47' y='22' width='1' height='1'/%3E%3Crect x='72' y='8' width='1' height='1'/%3E%3Crect x='22' y='41' width='1' height='1'/%3E%3Crect x='61' y='35' width='1' height='1'/%3E%3Crect x='92' y='52' width='1' height='1'/%3E%3Crect x='14' y='63' width='1' height='1'/%3E%3Crect x='49' y='60' width='1' height='1'/%3E%3Crect x='75' y='73' width='1' height='1'/%3E%3Crect x='33' y='84' width='1' height='1'/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 96px 96px;
+  opacity: 0.065;
+  animation: det-grain-shift 0.4s steps(4) infinite;
+}
+
+@keyframes det-lamp-sway {
+  0%, 100% { transform: rotate(calc(-1 * var(--lamp-sway-deg))); }
+  50% { transform: rotate(var(--lamp-sway-deg)); }
+}
+
+.det-lamp-pendulum {
+  transform-origin: top center;
+  animation: det-lamp-sway var(--lamp-sway-dur) ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes det-dust-float {
+  0% {
+    transform: translate3d(0px, 0px, 0px);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.45;
+  }
+  80% {
+    opacity: 0.35;
+  }
+  100% {
+    transform: translate3d(14px, -36px, 0px);
+    opacity: 0;
+  }
+}
+
+.det-dust-mote {
+  animation: det-dust-float linear infinite;
+  will-change: transform, opacity;
+}
+
+/* ============================================================================
+   3D-PRINTED MATTE GRAY CHASSIS & IVORY ABS FACEPLATES (Image 2 style)
+   ============================================================================ */
+.det-3d-shell-front {
+  background-color: #c2c4bf;
+  background-image:
+    /* Subtle 3D print horizontal layer lines */
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.045) 0px,
+      rgba(0, 0, 0, 0.045) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    /* Top-left warm lamp wash + dirty bottom-right corner gradient */
+    radial-gradient(circle at 12% 10%, rgba(255, 224, 175, 0.14), transparent 55%),
+    radial-gradient(circle at 92% 94%, rgba(55, 52, 46, 0.24), transparent 46%);
+  border-top: 2px solid #dfe1dc;
+  border-left: 2px solid #d5d7d2;
+  border-right: 2px solid #7f817c;
+  border-bottom: 2px solid #6d6f6b;
+  box-shadow:
+    inset 2px 2px 0 rgba(255, 255, 255, 0.35),
+    inset -3px -3px 6px rgba(45, 47, 43, 0.45),
+    0 24px 54px rgba(0, 0, 0, 0.85);
+}
+
+.det-3d-shell-back {
+  background-color: #969893;
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.05) 0px,
+    rgba(0, 0, 0, 0.05) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  border: 2px solid #595b57;
+}
+
+.det-3d-shell-left {
+  background-color: #a9aba6;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.05) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, rgba(255, 240, 210, 0.08), rgba(0, 0, 0, 0.22));
+  border: 2px solid #6d6f6b;
+}
+
+.det-3d-shell-right {
+  background-color: #9fa19c;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.05) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.32));
+  border: 2px solid #5f615d;
+}
+
+.det-3d-shell-bottom {
+  background-color: #6d6f6b;
+  border: 2px solid #3f413d;
+}
+
+/* Brushed dark blue-black metal top lid (#172030 -> #0f1620) as in Image 2 */
+.det-3d-lid-top {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.025) 0px,
+      rgba(255, 255, 255, 0.025) 1px,
+      transparent 1px,
+      transparent 4px
+    ),
+    linear-gradient(160deg, #172030 0%, #0f1620 100%);
+  border-top: 2px solid #2b3a54;
+  border-left: 2px solid #222e42;
+  border-right: 2px solid #090d14;
+  border-bottom: 2px solid #06090f;
+}
+
+/* Recessed gray-walled 3D bay pocket */
+.det-3d-pocket {
+  background: linear-gradient(165deg, #8b8d88 0%, #747671 100%);
+  box-shadow:
+    inset 5px 7px 12px rgba(25, 26, 24, 0.72),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.22),
+    inset 0 0 0 1px rgba(45, 47, 44, 0.55);
+  border-radius: 2px;
+}
+
+/* Slightly yellowed Ivory ABS Faceplate (#e6e1d3) */
+.det-ivory-plate {
+  background-color: #e6e1d3;
+  background-image:
+    radial-gradient(circle at 18% 14%, rgba(255, 252, 242, 0.45), transparent 52%),
+    radial-gradient(circle at 86% 88%, rgba(122, 110, 86, 0.18), transparent 48%),
+    radial-gradient(circle at 74% 32%, rgba(90, 82, 68, 0.05), transparent 22%);
+  color: #15171a;
+  border-top: 1px solid #f5f2e8;
+  border-left: 1px solid #f0ece0;
+  border-right: 1px solid #aba492;
+  border-bottom: 1px solid #968f7d;
+  border-radius: 2px;
+  box-shadow:
+    inset 0 0 0 1px rgba(21, 23, 26, 0.14),
+    2px 3px 8px rgba(0, 0, 0, 0.48);
+}
+
+/* Physical Dymo embossed navy label strip (#101a2b, #eceae2 letters) */
+.det-dymo-label {
+  background: linear-gradient(180deg, #16243c 0%, #101a2b 55%, #0a111d 100%);
+  color: #eceae2;
+  border-top: 1px solid #2b3f63;
+  border-bottom: 1px solid #050910;
+  border-left: 1px solid #1e2f4c;
+  border-right: 1px solid #070c14;
+  border-radius: 1px;
+  font-family: 'Oswald', 'Arial Narrow', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.85), 0 1px 0 rgba(255, 255, 255, 0.12);
+  box-shadow: 1px 2px 3px rgba(0, 0, 0, 0.55);
+}
+
+/* Dark arcade / microswitch button for module controls */
+.det-arcade-btn {
+  background: linear-gradient(180deg, #27292c 0%, #151719 88%, #0e0f11 100%);
+  color: #eceae2;
+  border-top: 2px solid #484c52;
+  border-left: 2px solid #3c4045;
+  border-right: 2px solid #090a0b;
+  border-bottom: 2px solid #050607;
+  border-radius: 2px;
+  box-shadow: 1px 3px 0 #070809, 2px 5px 8px rgba(0, 0, 0, 0.45);
+  transition: transform 80ms linear, box-shadow 80ms linear;
+}
+
+.det-arcade-btn:active:not(:disabled) {
+  transform: translate(1px, 2px);
+  box-shadow: inset 1px 2px 4px rgba(0, 0, 0, 0.7), 0 1px 0 #070809;
+}
+
+/* Dark recessed meter/switch housing on ivory plates */
+.det-module-well {
+  background: linear-gradient(180deg, #1b1d20 0%, #111315 100%);
+  border-top: 2px solid #0a0b0c;
+  border-left: 2px solid #0a0b0c;
+  border-right: 1px solid #c9c3b4;
+  border-bottom: 1px solid #d4cec0;
+  border-radius: 2px;
+  box-shadow: inset 2px 3px 8px rgba(0, 0, 0, 0.78);
+}
+
+/* White paper seal strip ("SIGILAT · NU DESCHIDE") */
+.det-seal-tape {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(21, 23, 26, 0.03) 0px,
+      rgba(21, 23, 26, 0.03) 2px,
+      transparent 2px,
+      transparent 6px
+    ),
+    #f2eee3;
+  color: #c0281c;
+  border-top: 1px dashed #c0281c;
+  border-bottom: 1px dashed #c0281c;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.55);
+}
+
+@keyframes det-seal-rip {
+  0% {
+    transform: rotate(-8deg) translateY(0) scale(1);
     opacity: 1;
-    box-shadow: 0 0 12px rgba(220, 38, 38, 0.95);
   }
-  50% {
-    opacity: 0.48;
-    box-shadow: 0 0 4px rgba(220, 38, 38, 0.35);
+  45% {
+    transform: rotate(-14deg) translateY(10px) scale(1.03);
+    opacity: 0.9;
   }
+  100% {
+    transform: rotate(-24deg) translateY(62px) scale(0.92);
+    opacity: 0;
+  }
+}
+
+.det-seal-ripping {
+  animation: det-seal-rip 600ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Rubber Stamp "DEZAMORSAT" */
+.det-rubber-stamp {
+  color: #166534;
+  border: 2.5px solid #166534;
+  outline: 1px solid #166534;
+  outline-offset: -5px;
+  padding: 2px 8px;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  mix-blend-mode: multiply;
+  opacity: 0.84;
+  transform: rotate(-6deg);
+}
+
+/* Dossier paper folder / specimen photo modal */
+.det-dossier-paper {
+  background-color: #dfd6be;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(255, 250, 236, 0.55), transparent 60%),
+    radial-gradient(circle at 88% 85%, rgba(110, 92, 62, 0.2), transparent 50%);
+  color: #15171a;
+  border: 1px solid #9c9178;
+  box-shadow:
+    inset 0 0 24px rgba(105, 88, 56, 0.16),
+    0 20px 46px rgba(0, 0, 0, 0.85);
+}
+
+/* Green CRT Terminal (Phase 1 Intro) */
+.det-crt-screen {
+  background: radial-gradient(ellipse at center, #0b2a14 0%, #04130a 60%, #010603 100%);
+  border-radius: 22px;
+  box-shadow:
+    inset 0 0 65px rgba(0, 0, 0, 0.88),
+    inset 0 0 18px rgba(109, 255, 143, 0.08),
+    0 0 0 8px #0c0e0d;
+}
+
+.det-crt-scanlines {
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.28) 0px,
+    rgba(0, 0, 0, 0.28) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+.det-terminal-text {
+  color: #6dff8f;
+  text-shadow:
+    0 0 6px rgba(57, 255, 106, 0.55),
+    0 0 18px rgba(57, 255, 106, 0.25),
+    -1px 0 0 rgba(255, 60, 60, 0.25),
+    1px 0 0 rgba(60, 140, 255, 0.25);
+}
+
+@keyframes det-crt-flicker {
+  0%, 100% { opacity: 0.025; }
+  50% { opacity: 0.055; }
+}
+
+.det-crt-flicker {
+  animation: det-crt-flicker 0.12s steps(2) infinite;
+}
+
+@keyframes det-crt-power-on {
+  0% {
+    transform: scaleX(0.15) scaleY(0.01);
+    filter: brightness(2.6);
+  }
+  45% {
+    transform: scaleX(1) scaleY(0.02);
+    filter: brightness(2);
+  }
+  100% {
+    transform: scaleX(1) scaleY(1);
+    filter: brightness(1);
+  }
+}
+
+.det-crt-boot {
+  animation: det-crt-power-on 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes det-crt-power-off {
+  0% {
+    transform: scaleX(1) scaleY(1);
+    opacity: 1;
+  }
+  55% {
+    transform: scaleX(1) scaleY(0.015);
+    filter: brightness(2.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(0.01) scaleY(0.01);
+    opacity: 0;
+  }
+}
+
+.det-crt-shutdown {
+  animation: det-crt-power-off 450ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes det-cursor-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.det-cursor-blink {
+  animation: det-cursor-blink 530ms steps(1) infinite;
 }
 
 /* ============================================================================
@@ -430,7 +750,6 @@ body {
 .bomb-face {
   backface-visibility: hidden;
   transform-style: preserve-3d;
-  outline: 1px solid rgba(255, 240, 210, 0.08);
 }
 
 @keyframes hw-shake {
@@ -471,19 +790,15 @@ body {
 }
 
 @keyframes radar-sweep {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .radar-sweep-beam {
   background: conic-gradient(
     from 0deg,
-    rgba(52, 211, 153, 0.24) 0deg,
-    rgba(52, 211, 153, 0.08) 38deg,
+    rgba(109, 255, 143, 0.22) 0deg,
+    rgba(109, 255, 143, 0.07) 38deg,
     transparent 76deg,
     transparent 360deg
   );
@@ -493,7 +808,7 @@ body {
 /* Leaflet Dark Radar overrides */
 .leaflet-container {
   background: #060a08 !important;
-  font-family: 'JetBrains Mono', monospace !important;
+  font-family: 'Courier Prime', monospace !important;
 }
 
 .leaflet-dark-tiles .leaflet-tile-pane {
@@ -501,13 +816,13 @@ body {
 }
 
 .leaflet-control-attribution {
-  background: rgba(11, 12, 13, 0.84) !important;
-  color: #6b7280 !important;
+  background: rgba(10, 12, 11, 0.84) !important;
+  color: #8a8576 !important;
   font-size: 9px !important;
 }
 
 .leaflet-control-attribution a {
-  color: #9ca3af !important;
+  color: #bdb6a4 !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -515,7 +830,15 @@ body {
   .animate-strike-flash,
   .animate-radar-ping,
   .hw-led-red-pulse,
-  .radar-sweep-beam {
+  .radar-sweep-beam,
+  .det-film-grain,
+  .det-lamp-pendulum,
+  .det-dust-mote,
+  .det-crt-flicker,
+  .det-crt-boot,
+  .det-crt-shutdown,
+  .det-cursor-blink,
+  .det-seal-ripping {
     animation: none !important;
   }
   .bomb-3d-assembly {

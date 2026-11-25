@@ -12,9 +12,9 @@ const LEFT_Y: Record<1 | 2 | 3, number> = { 1: 28, 2: 75, 3: 122 };
 const RIGHT_Y: Record<SeqTerminal, number> = { A: 28, B: 75, C: 122 };
 
 function seqColorPalette(color: SeqWireColor): { main: string; shade: string; label: string } {
-  if (color === 'red') return { main: '#b91c1c', shade: '#5c0c0c', label: 'Roșu' };
+  if (color === 'red') return { main: '#c0281c', shade: '#5c0c0c', label: 'Roșu' };
   if (color === 'blue') return { main: '#1d4ed8', shade: '#0d2363', label: 'Albastru' };
-  return { main: '#27272a', shade: '#09090b', label: 'Negru' };
+  return { main: '#242629', shade: '#09090b', label: 'Negru' };
 }
 
 export const WireSequencesModule: React.FC<WireSequencesModuleProps> = ({
@@ -37,12 +37,12 @@ export const WireSequencesModule: React.FC<WireSequencesModuleProps> = ({
     panelWires.find((w) => w.slotIndex === slot);
 
   return (
-    <div className="recessed-bay p-3">
-      <div className="flex items-stretch gap-3">
-        {/* Main Panel Window with Corrugated Steel Shutter */}
-        <div className="relative flex-1 bakelite-surface overflow-hidden p-2">
-          <div className="flex items-center justify-between px-1.5 pb-1.5 border-b border-stone-800 mb-1">
-            <span className="font-tech text-[10px] text-amber-300 tracking-wider">
+    <div className="p-2 bg-[#ddd7c7] border border-[#15171a]/20 rounded-[2px]">
+      <div className="flex items-stretch gap-2">
+        {/* Main Brass-Terminal Window with Corrugated Shutter */}
+        <div className="relative flex-1 det-module-well overflow-hidden p-2">
+          <div className="flex items-center justify-between px-1.5 pb-1.5 border-b border-[#2c2f33] mb-1">
+            <span className="font-tech text-[10px] font-bold text-[#ffd9a0] tracking-wider">
               PANOU {state.currentPanel + 1} / 4
             </span>
             <div className="flex gap-1.5">
@@ -61,23 +61,25 @@ export const WireSequencesModule: React.FC<WireSequencesModuleProps> = ({
             </div>
           </div>
 
-          <div className="relative h-[150px] w-full bg-[#0a0b0d] border border-stone-800">
+          <div className="relative h-[142px] w-full bg-[#0e1012] border border-[#2c2f33]">
             <svg viewBox="0 0 240 150" className="w-full h-full">
-              {/* Left Screw-Terminal Posts (1-3 slot labels) */}
+              {/* Left Brass Screw-Terminal Posts (1-3) */}
               {([1, 2, 3] as const).map((slot) => {
                 const w = wireAtSlot(slot);
                 const y = LEFT_Y[slot];
                 return (
                   <g key={`L-${slot}`}>
-                    <rect x="6" y={y - 12} width="32" height="24" rx="1.5" fill="#1e2024" stroke="#3c4046" />
-                    <circle cx="35" cy={y} r="3" fill="#7c6335" stroke="#140e04" strokeWidth="0.8" />
+                    <rect x="6" y={y - 12} width="32" height="24" rx="1.5" fill="#1e2024" stroke="#484c52" />
+                    <circle cx="35" cy={y} r="3.4" fill="#8f784a" stroke="#140e04" strokeWidth="0.9" />
+                    <line x1="33.5" y1={y - 1} x2="36.5" y2={y + 1} stroke="#0c0904" strokeWidth="1" />
                     <text
                       x="19"
                       y={y + 4}
                       textAnchor="middle"
-                      fill={w ? '#f5f5f4' : '#57534e'}
+                      fill={w ? '#eceae2' : '#6d6f6b'}
                       fontSize="12"
-                      fontFamily="Share Tech Mono, monospace"
+                      fontFamily="Courier Prime, monospace"
+                      fontWeight="bold"
                     >
                       {w ? w.labelNumber : '-'}
                     </text>
@@ -85,21 +87,22 @@ export const WireSequencesModule: React.FC<WireSequencesModuleProps> = ({
                 );
               })}
 
-              {/* Right Screw-Terminal Posts (A, B, C) */}
+              {/* Right Brass Screw-Terminal Posts (A, B, C) */}
               {(['A', 'B', 'C'] as const).map((term) => {
                 const y = RIGHT_Y[term];
                 return (
                   <g key={`R-${term}`}>
-                    <rect x="202" y={y - 12} width="32" height="24" rx="1.5" fill="#1e2024" stroke="#3c4046" />
-                    <circle cx="205" cy={y} r="3" fill="#7c6335" stroke="#140e04" strokeWidth="0.8" />
+                    <rect x="202" y={y - 12} width="32" height="24" rx="1.5" fill="#1e2024" stroke="#484c52" />
+                    <circle cx="205" cy={y} r="3.4" fill="#8f784a" stroke="#140e04" strokeWidth="0.9" />
+                    <line x1="203.5" y1={y + 1} x2="206.5" y2={y - 1} stroke="#0c0904" strokeWidth="1" />
                     <text
                       x="221"
                       y={y + 4}
                       textAnchor="middle"
-                      fill="#fbbf24"
+                      fill="#ffd9a0"
                       fontSize="13"
                       fontWeight="bold"
-                      fontFamily="Share Tech Mono, monospace"
+                      fontFamily="Courier Prime, monospace"
                     >
                       {term}
                     </text>
@@ -107,7 +110,7 @@ export const WireSequencesModule: React.FC<WireSequencesModuleProps> = ({
                 );
               })}
 
-              {/* Connected Diagonal Cylindrical Wires */}
+              {/* Connected Diagonal Wires */}
               {panelWires.map((w) => {
                 const y1 = LEFT_Y[w.slotIndex];
                 const y2 = RIGHT_Y[w.target];
@@ -173,7 +176,7 @@ export const WireSequencesModule: React.FC<WireSequencesModuleProps> = ({
                           strokeWidth="7.5"
                           strokeLinecap="round"
                         />
-                        <circle cx={midX - 17} cy={midY - 7} r="2.6" fill="#f59e0b" />
+                        <circle cx={midX - 17} cy={midY - 7} r="2.6" fill="#d97706" />
                         <path
                           d={`M ${midX + 18} ${midY + 7} Q 165 ${y2}, 202 ${y2}`}
                           fill="none"
@@ -181,7 +184,7 @@ export const WireSequencesModule: React.FC<WireSequencesModuleProps> = ({
                           strokeWidth="7.5"
                           strokeLinecap="round"
                         />
-                        <circle cx={midX + 17} cy={midY + 7} r="2.6" fill="#f59e0b" />
+                        <circle cx={midX + 17} cy={midY + 7} r="2.6" fill="#d97706" />
                       </>
                     )}
                   </g>
@@ -189,15 +192,15 @@ export const WireSequencesModule: React.FC<WireSequencesModuleProps> = ({
               })}
             </svg>
 
-            {/* Sliding Corrugated Steel Shutter Overlay */}
+            {/* Sliding Metal Shutter */}
             <div
-              className={`pointer-events-none absolute inset-0 bg-gradient-to-b from-stone-600 via-stone-800 to-stone-950 border-y-2 border-stone-500 transition-transform duration-150 ${
+              className={`pointer-events-none absolute inset-0 bg-gradient-to-b from-[#4c4e52] via-[#27292c] to-[#121415] border-y-2 border-[#6d6f6b] transition-transform duration-150 ${
                 shutterClosing ? 'translate-y-0' : '-translate-y-full'
               }`}
             />
           </div>
 
-          {/* Explicit Tactile Terminal Switches for Mobile Touch */}
+          {/* Mobile Touch Terminal Cut Buttons */}
           <div className="grid grid-cols-3 gap-1.5 mt-2">
             {panelWires.map((w) => (
               <button
@@ -205,12 +208,12 @@ export const WireSequencesModule: React.FC<WireSequencesModuleProps> = ({
                 type="button"
                 disabled={w.cut}
                 onClick={() => onCutWire(w.id)}
-                className={`mech-toggle py-2 px-2 font-tech text-[11px] flex items-center justify-center gap-1.5 cursor-pointer ${
-                  w.cut ? 'opacity-40 line-through text-stone-500 cursor-default' : 'text-stone-100'
+                className={`det-arcade-btn min-h-[44px] py-1.5 px-2 font-tech text-[11px] font-bold flex items-center justify-center gap-1.5 cursor-pointer ${
+                  w.cut ? 'opacity-40 line-through cursor-default' : ''
                 }`}
               >
                 <span
-                  className="w-2.5 h-2.5 rounded-full inline-block border border-white/30"
+                  className="w-2.5 h-2.5 rounded-full inline-block border border-white/40 shrink-0"
                   style={{ backgroundColor: seqColorPalette(w.color).main }}
                 />
                 <span>
@@ -221,24 +224,24 @@ export const WireSequencesModule: React.FC<WireSequencesModuleProps> = ({
           </div>
         </div>
 
-        {/* Up / Down Mechanical Panel Navigation */}
+        {/* Two Large Up / Down Rocker Buttons */}
         <div className="flex flex-col justify-between gap-2 w-12">
           <button
             type="button"
             onClick={() => handleNav('up')}
             disabled={state.currentPanel === 0}
             aria-label="Panoul anterior"
-            className="mech-key flex-1 min-h-[48px] flex items-center justify-center text-stone-200 disabled:opacity-35 cursor-pointer"
+            className="det-arcade-btn flex-1 min-h-[48px] flex items-center justify-center disabled:opacity-35 cursor-pointer"
           >
-            <ChevronUp className="w-6 h-6" aria-hidden="true" />
+            <ChevronUp className="w-6 h-6 text-[#eceae2]" aria-hidden="true" />
           </button>
           <button
             type="button"
             onClick={() => handleNav('down')}
             aria-label={state.currentPanel === 3 ? 'Finalizează panoul 4' : 'Panoul următor'}
-            className="mech-key flex-1 min-h-[48px] flex items-center justify-center text-amber-300 cursor-pointer"
+            className="det-arcade-btn flex-1 min-h-[48px] flex items-center justify-center cursor-pointer"
           >
-            <ChevronDown className="w-6 h-6" aria-hidden="true" />
+            <ChevronDown className="w-6 h-6 text-[#ffd9a0]" aria-hidden="true" />
           </button>
         </div>
       </div>
