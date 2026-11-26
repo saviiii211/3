@@ -5,6 +5,7 @@ import { SlottedScrew } from './ModuleCardShell';
 interface VictoryScreenProps {
   strikes: number;
   solvedCount: number;
+  skippedCount?: number;
   elapsedSeconds?: number;
   serialNumber?: string;
   onBackToConsole: () => void;
@@ -34,6 +35,7 @@ function formatStoppedTime(totalSec: number): string {
 export const VictoryScreen: React.FC<VictoryScreenProps> = ({
   strikes,
   solvedCount,
+  skippedCount = 0,
   elapsedSeconds = 0,
   serialNumber = 'UNIT-03',
   onBackToConsole,
@@ -191,6 +193,15 @@ export const VictoryScreen: React.FC<VictoryScreenProps> = ({
             </span>
             <span className="font-lcd text-2xl nixie-tube relative z-10">{strikes}</span>
           </div>
+        </div>
+
+        <div
+          data-testid="victory-skipped-count"
+          className="mt-2 crt-amber-glass py-1.5 px-3 text-center"
+        >
+          <span className="font-tech text-xs font-bold tracking-wider text-amber-300 relative z-10">
+            Module sărite: {skippedCount}
+          </span>
         </div>
 
         {/* Controls */}

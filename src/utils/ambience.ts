@@ -5,6 +5,12 @@ class RoomAmbienceAudio {
   private humOsc: OscillatorNode | null = null;
   private humGain: GainNode | null = null;
   private running = false;
+  private sfxTimer: number | null = null;
+  private sfxSubTimers: number[] = [];
+  private sfxActive = false;
+  private sfxStrikes = 0;
+  private sfxBusyUntil = 0;
+  private lastSfxIndex = -1;
 
   private ensureContext(): AudioContext | null {
     if (soundEngine.isMuted() || typeof window === 'undefined') return null;
@@ -278,6 +284,55 @@ class RoomAmbienceAudio {
     src.start(now);
   }
 
+  /** Crisp short mechanical metallic latch/hinge sound for the rear I/O casing lid */
+  playLidLatch(opening: boolean) {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+
+    // 1. Short metallic clack transient
+    const noise = ctx.createBufferSource();
+    noise.buffer = this.makeNoiseBuffer(ctx, 0.09);
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.setValueAtTime(opening ? 2100 : 1450, now);
+    bp.Q.setValueAtTime(3.0, now);
+    const nGain = ctx.createGain();
+    nGain.gain.setValueAtTime(0.085, now);
+    nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.085);
+    noise.connect(bp);
+    bp.connect(nGain);
+    nGain.connect(ctx.destination);
+    noise.start(now);
+
+    // 2. Resonant stamped-steel ring
+    const ring = ctx.createOscillator();
+    const rGain = ctx.createGain();
+    ring.type = 'triangle';
+    ring.frequency.setValueAtTime(opening ? 520 : 390, now);
+    ring.frequency.exponentialRampToValueAtTime(opening ? 760 : 210, now + 0.14);
+    rGain.gain.setValueAtTime(0.065, now);
+    rGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    ring.connect(rGain);
+    rGain.connect(ctx.destination);
+    ring.start(now);
+    ring.stop(now + 0.16);
+
+    // 3. Secondary mechanical latch click when closing
+    if (!opening) {
+      const latch = ctx.createOscillator();
+      const lGain = ctx.createGain();
+      latch.type = 'square';
+      latch.frequency.setValueAtTime(880, now + 0.095);
+      lGain.gain.setValueAtTime(0.045, now + 0.095);
+      lGain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
+      latch.connect(lGain);
+      lGain.connect(ctx.destination);
+      latch.start(now + 0.095);
+      latch.stop(now + 0.14);
+    }
+  }
+
   /** Faint continuous low 100Hz room/lamp electrical hum during gameplay */
   setTensionHum(tensionLevel: number, active: boolean) {
     if (!active || soundEngine.isMuted() || (typeof document !== 'undefined' && document.hidden)) {
@@ -330,8 +385,298 @@ class RoomAmbienceAudio {
     this.running = false;
   }
 
+  private randVol(min = 0.02, max = 0.06): number {
+    return min + Math.random() * (max - min);
+  }
+
+  /** Random WebAudio ambient noir room & radio SFX (11 distinct sounds, vol 0.02-0.06, never overlapping) */
+  private triggerRandomAmbientSfx(): number {
+    const ctx = this.ensureContext();
+    if (!ctx) return 0;
+    const now = ctx.currentTime;
+    const nowMs = Date.now();
+    if (nowMs < this.sfxBusyUntil) return 0;
+
+    let idx = Math.floor(Math.random() * 11);
+    if (idx === this.lastSfxIndex) {
+      idx = (idx + 1 + Math.floor(Math.random() * 10)) % 11;
+    }
+    this.lastSfxIndex = idx;
+
+    let durationMs = 600;
+    switch (idx) {
+      case 0: {
+        // Scârțâit de podea
+        const osc = ctx.createOscillator();
+        const bp = ctx.createBiquadFilter();
+        const g = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(112, now);
+        osc.frequency.linearRampToValueAtTime(164, now + 0.24);
+        osc.frequency.linearRampToValueAtTime(94, now + 0.52);
+        bp.type = 'bandpass';
+        bp.frequency.setValueAtTime(460, now);
+        bp.Q.setValueAtTime(3.6, now);
+        const v = this.randVol(0.024, 0.044);
+        g.gain.setValueAtTime(0.001, now);
+        g.gain.linearRampToValueAtTime(v, now + 0.08);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.52);
+        osc.connect(bp);
+        bp.connect(g);
+        g.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.54);
+        durationMs = 600;
+        break;
+      }
+      case 1: {
+        // Picătură de apă
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(620, now);
+        osc.frequency.exponentialRampToValueAtTime(1240, now + 0.07);
+        const v = this.randVol(0.025, 0.048);
+        g.gain.setValueAtTime(v, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+        osc.connect(g);
+        g.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.1);
+        durationMs = 200;
+        break;
+      }
+      case 2: {
+        // Tunet îndepărtat
+        const src = ctx.createBufferSource();
+        src.buffer = this.makeNoiseBuffer(ctx, 1.55);
+        const lp = ctx.createBiquadFilter();
+        lp.type = 'lowpass';
+        lp.frequency.setValueAtTime(95, now);
+        const g = ctx.createGain();
+        const v = this.randVol(0.036, 0.06);
+        g.gain.setValueAtTime(0.001, now);
+        g.gain.linearRampToValueAtTime(v, now + 0.25);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+        src.connect(lp);
+        lp.connect(g);
+        g.connect(ctx.destination);
+        src.start(now);
+        durationMs = 1600;
+        break;
+      }
+      case 3: {
+        // Sirenă foarte departe
+        const osc = ctx.createOscillator();
+        const lp = ctx.createBiquadFilter();
+        const g = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(470, now);
+        osc.frequency.linearRampToValueAtTime(610, now + 0.65);
+        osc.frequency.linearRampToValueAtTime(460, now + 1.35);
+        lp.type = 'lowpass';
+        lp.frequency.setValueAtTime(720, now);
+        const v = this.randVol(0.02, 0.032);
+        g.gain.setValueAtTime(0.001, now);
+        g.gain.linearRampToValueAtTime(v, now + 0.3);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 1.38);
+        osc.connect(lp);
+        lp.connect(g);
+        g.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 1.4);
+        durationMs = 1450;
+        break;
+      }
+      case 4: {
+        // Click de releu
+        [0, 0.085].forEach((offset) => {
+          const src = ctx.createBufferSource();
+          src.buffer = this.makeNoiseBuffer(ctx, 0.02);
+          const bp = ctx.createBiquadFilter();
+          bp.type = 'bandpass';
+          bp.frequency.setValueAtTime(1650, now + offset);
+          bp.Q.setValueAtTime(2.5, now + offset);
+          const g = ctx.createGain();
+          g.gain.setValueAtTime(this.randVol(0.028, 0.052), now + offset);
+          g.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.018);
+          src.connect(bp);
+          bp.connect(g);
+          g.connect(ctx.destination);
+          src.start(now + offset);
+        });
+        durationMs = 200;
+        break;
+      }
+      case 5: {
+        // Vânt prin geam
+        const src = ctx.createBufferSource();
+        src.buffer = this.makeNoiseBuffer(ctx, 1.3);
+        const bp = ctx.createBiquadFilter();
+        bp.type = 'bandpass';
+        bp.frequency.setValueAtTime(360, now);
+        bp.frequency.linearRampToValueAtTime(640, now + 0.55);
+        bp.frequency.linearRampToValueAtTime(300, now + 1.25);
+        bp.Q.setValueAtTime(3.2, now);
+        const g = ctx.createGain();
+        const v = this.randVol(0.024, 0.042);
+        g.gain.setValueAtTime(0.001, now);
+        g.gain.linearRampToValueAtTime(v, now + 0.32);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 1.28);
+        src.connect(bp);
+        bp.connect(g);
+        g.connect(ctx.destination);
+        src.start(now);
+        durationMs = 1350;
+        break;
+      }
+      case 6: {
+        // Pași pe hol (3 pași îndepărtați)
+        [0, 420, 840].forEach((ms) => {
+          const tid = window.setTimeout(() => {
+            if (!this.sfxActive || soundEngine.isMuted() || document.hidden) return;
+            const c = this.ensureContext();
+            if (!c) return;
+            const t = c.currentTime;
+            const osc = c.createOscillator();
+            const g = c.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(68, t);
+            osc.frequency.exponentialRampToValueAtTime(36, t + 0.065);
+            g.gain.setValueAtTime(this.randVol(0.025, 0.045), t);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.075);
+            osc.connect(g);
+            g.connect(c.destination);
+            osc.start(t);
+            osc.stop(t + 0.085);
+          }, ms);
+          this.sfxSubTimers.push(tid);
+        });
+        durationMs = 1050;
+        break;
+      }
+      case 7: {
+        // Ușă trântită departe
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(76, now);
+        osc.frequency.exponentialRampToValueAtTime(32, now + 0.22);
+        g.gain.setValueAtTime(this.randVol(0.038, 0.058), now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+        osc.connect(g);
+        g.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.26);
+        durationMs = 350;
+        break;
+      }
+      case 8: {
+        // Ping de purtătoare radio
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1320, now);
+        g.gain.setValueAtTime(this.randVol(0.02, 0.036), now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+        osc.connect(g);
+        g.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.22);
+        durationMs = 300;
+        break;
+      }
+      case 9: {
+        // Morse scurt (· − ·)
+        const pips = [
+          { start: 0, len: 0.055 },
+          { start: 0.11, len: 0.14 },
+          { start: 0.31, len: 0.055 },
+        ];
+        const v = this.randVol(0.022, 0.038);
+        pips.forEach((p) => {
+          const osc = ctx.createOscillator();
+          const g = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(980, now + p.start);
+          g.gain.setValueAtTime(v, now + p.start);
+          g.gain.exponentialRampToValueAtTime(0.001, now + p.start + p.len);
+          osc.connect(g);
+          g.connect(ctx.destination);
+          osc.start(now + p.start);
+          osc.stop(now + p.start + p.len + 0.01);
+        });
+        durationMs = 450;
+        break;
+      }
+      default: {
+        // Scrâșnet scurt de static
+        const src = ctx.createBufferSource();
+        src.buffer = this.makeNoiseBuffer(ctx, 0.18);
+        const bp = ctx.createBiquadFilter();
+        bp.type = 'bandpass';
+        bp.frequency.setValueAtTime(1850, now);
+        bp.Q.setValueAtTime(1.4, now);
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(this.randVol(0.028, 0.052), now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.17);
+        src.connect(bp);
+        bp.connect(g);
+        g.connect(ctx.destination);
+        src.start(now);
+        durationMs = 260;
+        break;
+      }
+    }
+
+    this.sfxBusyUntil = nowMs + durationMs;
+    return durationMs;
+  }
+
+  /** Start/stop random 8-25s (5-14s at strikes >= 2) ambient SFX loop */
+  setAmbientSfxActive(active: boolean, strikes = 0) {
+    this.sfxStrikes = strikes;
+    if (!active || soundEngine.isMuted() || (typeof document !== 'undefined' && document.hidden)) {
+      this.stopAmbientSfx();
+      return;
+    }
+    if (this.sfxActive) return;
+    this.sfxActive = true;
+
+    const scheduleNext = () => {
+      if (!this.sfxActive) return;
+      const minMs = this.sfxStrikes >= 2 ? 5000 : 8000;
+      const maxMs = this.sfxStrikes >= 2 ? 14000 : 25000;
+      const wait = minMs + Math.random() * (maxMs - minMs);
+      this.sfxTimer = window.setTimeout(() => {
+        if (!this.sfxActive) return;
+        const ranMs = this.triggerRandomAmbientSfx();
+        const extraDelay = ranMs > 0 ? ranMs : 0;
+        if (extraDelay > 0) {
+          this.sfxTimer = window.setTimeout(scheduleNext, extraDelay);
+        } else {
+          scheduleNext();
+        }
+      }, wait);
+    };
+    scheduleNext();
+  }
+
+  stopAmbientSfx() {
+    this.sfxActive = false;
+    if (this.sfxTimer !== null) {
+      window.clearTimeout(this.sfxTimer);
+      this.sfxTimer = null;
+    }
+    while (this.sfxSubTimers.length) {
+      const id = this.sfxSubTimers.pop();
+      if (id !== undefined) window.clearTimeout(id);
+    }
+  }
+
   dispose() {
     this.stopTensionHum();
+    this.stopAmbientSfx();
     if (this.ctx) {
       void this.ctx.close().catch(() => {});
       this.ctx = null;

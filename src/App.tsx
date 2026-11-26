@@ -23,6 +23,7 @@ import {
   getActiveDestination,
   isGpsUnlocked,
   loadMissionState,
+  markModuleSkipped,
   markModuleSolved,
   saveMissionState,
 } from './game/missionState';
@@ -96,16 +97,18 @@ export default function App() {
 
   const tensionLevel = Math.min(3, state.strikes);
 
-  // Sync audio mute, radio strikes, ambience hum, and localStorage persistence
+  // Sync audio mute, radio strikes/progress, ambience hum + random SFX, and localStorage persistence
   useEffect(() => {
     soundEngine.setMuted(state.muted);
     saveMissionState(state);
     radioEngine.setStrikes(state.strikes);
+    radioEngine.setSolvedCount(state.solvedModules.length);
     if (state.muted) {
       radioEngine.cancel();
     }
     const audioActive = appPhase === 'game' && !state.muted && !state.victory;
     ambienceAudio.setTensionHum(tensionLevel, audioActive);
+    ambienceAudio.setAmbientSfxActive(audioActive, state.strikes);
   }, [appPhase, state, tensionLevel]);
 
   // Ambient radio static loop + cleanup + visibilitychange pause
@@ -118,9 +121,11 @@ export default function App() {
     const onVisChange = () => {
       if (document.hidden) {
         ambienceAudio.stopTensionHum();
+        ambienceAudio.stopAmbientSfx();
         radioEngine.cancel();
       } else if (appPhase === 'game' && !state.muted && !state.victory) {
         ambienceAudio.setTensionHum(tensionLevel, true);
+        ambienceAudio.setAmbientSfxActive(true, strikesRef.current);
       }
     };
     document.addEventListener('visibilitychange', onVisChange);
@@ -184,9 +189,13 @@ export default function App() {
   );
 
   const handleModuleSolved = useCallback(
-    (moduleId: ModuleId) => {
+    (moduleId: ModuleId, options?: { skipped?: boolean }) => {
       soundEngine.playModuleSolved();
-      radioEngine.announceModuleSolved(moduleId);
+      if (options?.skipped) {
+        radioEngine.announceModuleSkipped(moduleId);
+      } else {
+        radioEngine.announceModuleSolved(moduleId);
+      }
       triggerHaptic([45, 35, 75]);
       setJustSolvedId(moduleId);
       window.setTimeout(() => setJustSolvedId((cur) => (cur === moduleId ? null : cur)), 2500);
@@ -227,6 +236,7 @@ export default function App() {
 
   // Module 1: Memory
   const handleMemoryPress = (pos: 1 | 2 | 3 | 4) => {
+    radioEngine.recordPlayerAction(true);
     const res = pressMemoryButton(state.memory, pos);
     if (!res.correct) {
       setState((prev) => ({
@@ -248,6 +258,7 @@ export default function App() {
 
   // Module 2: Complicated Wires
   const handleCutComplicatedWire = (wireId: number) => {
+    radioEngine.recordPlayerAction(true);
     const res = cutComplicatedWire(state.complicatedWires, wireId);
     if (!res.valid) {
       setState((prev) => ({ ...prev, strikes: prev.strikes + 1 }));
@@ -265,6 +276,7 @@ export default function App() {
 
   // Module 3: Who's on First
   const handleWhosOnFirstPress = (btnIndex: number) => {
+    radioEngine.recordPlayerAction(true);
     const res = pressWhosOnFirstButton(state.whosOnFirst, btnIndex);
     if (!res.correct) {
       setState((prev) => ({
@@ -286,6 +298,7 @@ export default function App() {
 
   // Module 4: Wire Sequences
   const handleCutSeqWire = (wireId: number) => {
+    radioEngine.recordPlayerAction(true);
     const res = cutSequenceWire(state.wireSequences, wireId);
     if (!res.valid) {
       setState((prev) => ({ ...prev, strikes: prev.strikes + 1 }));
@@ -302,6 +315,7 @@ export default function App() {
   };
 
   const handleSeqNavigate = (dir: 'up' | 'down') => {
+    radioEngine.recordPlayerAction(true);
     const res = navigateSequencePanel(state.wireSequences, dir);
     if (res.blocked) {
       setState((prev) => ({ ...prev, strikes: prev.strikes + 1 }));
@@ -319,6 +333,7 @@ export default function App() {
 
   // Module 5: Mazes
   const handleMazeMove = (dir: MazeDirection) => {
+    radioEngine.recordPlayerAction(true);
     const res = moveMazePlayer(state.maze, dir);
     if (res.hitWall) {
       setMazeWallFlash(true);
@@ -338,6 +353,7 @@ export default function App() {
 
   // Module 6: Knobs
   const handleKnobRotate = () => {
+    radioEngine.recordPlayerAction(true);
     soundEngine.playClick();
     triggerHaptic(18);
     setState((prev) => ({
@@ -363,6 +379,7 @@ export default function App() {
   }, []);
 
   const handleKnobResetTimer = () => {
+    radioEngine.recordPlayerAction(true);
     soundEngine.playClick();
     setState((prev) => ({
       ...prev,
@@ -371,6 +388,7 @@ export default function App() {
   };
 
   const handleKnobValidate = () => {
+    radioEngine.recordPlayerAction(true);
     if (!isKnobAlignedCorrectly(state.knobs)) {
       setState((prev) => ({ ...prev, strikes: prev.strikes + 1 }));
       registerStrike(6, 'Orientare greșită raportată la „UP”!');
@@ -382,6 +400,7 @@ export default function App() {
 
   // Module 7: Passwords
   const handlePasswordStep = (colIndex: number, delta: 1 | -1) => {
+    radioEngine.recordPlayerAction(true);
     soundEngine.playClick();
     triggerHaptic(15);
     setState((prev) => ({
@@ -391,6 +410,7 @@ export default function App() {
   };
 
   const handlePasswordSubmit = () => {
+    radioEngine.recordPlayerAction(true);
     if (!checkPasswordSubmit(state.passwords)) {
       setState((prev) => ({ ...prev, strikes: prev.strikes + 1 }));
       registerStrike(7, 'Parolă invalidă! Verifică literele din Coloana 1 și 2.');
@@ -407,6 +427,13 @@ export default function App() {
     setFinaleStartAtVideo(false);
     setFinaleOpen(true);
     setState((prev) => ({ ...prev, victory: true }));
+  };
+
+  // Emergency skip handler (same progression effects as admin unlock, plus skipped tracking)
+  const handleEmergencySkipModule = (id: ModuleId) => {
+    radioEngine.recordPlayerAction(true);
+    setState((prev) => markModuleSkipped(prev, id));
+    handleModuleSolved(id, { skipped: true });
   };
 
   // Admin handlers
@@ -480,11 +507,12 @@ export default function App() {
           tensionLevel={state.victory ? 0 : tensionLevel}
           strikes={state.strikes}
           bulbCalm={state.victory}
-          showProps={activeView === 'console'}
+          showProps={activeView === 'console' && focusedModuleId === null}
           showDeviceShadow={activeView === 'console'}
           rotationHint={bombRot}
           onOpenLoupe={() => {
             soundEngine.playClick();
+            radioEngine.recordPlayerAction(false);
             setLoupeOpen(true);
           }}
         >
@@ -640,6 +668,8 @@ export default function App() {
             onFocusModule={(id) => {
               soundEngine.playClick();
               setFocusedModuleId(id);
+              radioEngine.recordPlayerAction(false);
+              radioEngine.setFocusedModule(id);
               if (id !== null) {
                 radioEngine.announceModule(id);
               } else {
@@ -648,12 +678,15 @@ export default function App() {
             }}
             onOpenLoupe={() => {
               soundEngine.playClick();
+              radioEngine.recordPlayerAction(false);
               setLoupeOpen(true);
             }}
             onOpenGps={() => {
               soundEngine.playClick();
+              radioEngine.recordPlayerAction(false);
               setActiveView('gps');
             }}
+            onEmergencySkip={handleEmergencySkipModule}
             onMemoryPress={handleMemoryPress}
             onCutComplicatedWire={handleCutComplicatedWire}
             onWhosOnFirstPress={handleWhosOnFirstPress}
@@ -721,6 +754,7 @@ export default function App() {
           <VictoryScreen
             strikes={state.strikes}
             solvedCount={state.solvedModules.length}
+            skippedCount={state.skippedModules.length}
             elapsedSeconds={elapsedSeconds}
             serialNumber={state.casing.serialNumber}
             onBackToConsole={() => setState((prev) => ({ ...prev, victory: false }))}

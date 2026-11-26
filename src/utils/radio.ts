@@ -1,4 +1,8 @@
-import { RADIO_AMBIENT_LINES } from '../config';
+import {
+  RADIO_AMBIENT_LINES,
+  type RadioAmbientLine,
+  type RadioLineCategory,
+} from '../config';
 import type { ModuleId } from '../game/types';
 import { soundEngine } from './sound';
 
@@ -18,6 +22,22 @@ type Listener = (snap: RadioUiSnapshot) => void;
 const RO_NUM_WORDS = ['unu', 'doi', 'trei', 'patru', 'cinci', 'șase', 'șapte'];
 const EN_NUM_WORDS = ['one', 'two', 'three', 'four', 'five', 'six', 'seven'];
 
+function chunkWords(words: string[]): string[] {
+  const clean = words.filter(Boolean);
+  if (clean.length <= 2) {
+    return clean.length === 0 ? [] : [clean.join(' ')];
+  }
+  const chunks: string[] = [];
+  let i = 0;
+  while (i < clean.length) {
+    const remaining = clean.length - i;
+    const take = remaining === 4 ? 2 : remaining >= 3 ? 3 : remaining;
+    chunks.push(clean.slice(i, i + take).join(' '));
+    i += take;
+  }
+  return chunks;
+}
+
 class FieldRadioEngine {
   private ctx: AudioContext | null = null;
   private listeners = new Set<Listener>();
@@ -26,9 +46,16 @@ class FieldRadioEngine {
   private subtitleTimer: number | null = null;
   private ambientTimer: number | null = null;
   private lastAmbientSpokenAt = 0;
+  private lastAmbientRoText = '';
   private lastFocusedModuleId: ModuleId | null = null;
   private lastFocusedAt = 0;
+  private focusedModuleId: ModuleId | null = null;
+  private lastActionAt = Date.now();
+  private lastModuleInputAt = 0;
   private strikesCount = 0;
+  private solvedCount = 0;
+  private isSpeaking = false;
+  private speakGen = 0;
   private cachedVoices: SpeechSynthesisVoice[] = [];
   private voicesBound = false;
 
@@ -162,13 +189,18 @@ class FieldRadioEngine {
     enWords: string[],
     onDone?: () => void
   ) {
+    const myGen = ++this.speakGen;
+
     if (
       soundEngine.isMuted() ||
       typeof window === 'undefined' ||
       !('speechSynthesis' in window)
     ) {
+      this.isSpeaking = false;
       if (onDone) {
-        const t = window.setTimeout(onDone, 500);
+        const t = window.setTimeout(() => {
+          if (this.speakGen === myGen) onDone();
+        }, 500);
         this.timers.push(t);
       }
       return;
@@ -182,33 +214,46 @@ class FieldRadioEngine {
 
     const { voice, isRomanian } = this.pickVoice();
     const baseWords = isRomanian ? roWords : enWords;
-    // 15% probability of repeating a word for weak signal realism
-    const queue = [...baseWords];
-    if (queue.length > 1 && Math.random() < 0.15) {
+    const queue = chunkWords(baseWords);
+
+    // 15% base probability of repeating a fragment for weak signal realism; rises with strikes
+    const repeatChance = Math.min(0.45, 0.15 + this.strikesCount * 0.08);
+    if (queue.length > 0 && Math.random() < repeatChance) {
       const idx = Math.floor(Math.random() * queue.length);
-      queue.splice(idx, 0, queue[idx]);
+      const repeatWord = queue[idx].split(/\s+/)[0] || queue[idx];
+      queue.splice(idx, 0, repeatWord);
     }
 
+    this.isSpeaking = true;
     let step = 0;
     const speakNext = () => {
-      if (soundEngine.isMuted()) return;
+      if (this.speakGen !== myGen || soundEngine.isMuted()) {
+        this.isSpeaking = false;
+        return;
+      }
       if (step >= queue.length) {
+        this.isSpeaking = false;
         onDone?.();
         return;
       }
-      const word = queue[step];
+      const chunk = queue[step];
       step += 1;
-      const utt = new SpeechSynthesisUtterance(word);
+      const utt = new SpeechSynthesisUtterance(chunk);
       if (voice) utt.voice = voice;
       utt.lang = isRomanian ? 'ro-RO' : 'en-US';
-      utt.pitch = 0.24;
-      utt.rate = 0.8;
-      utt.volume = 0.9;
+      utt.pitch = 0.5;
+      utt.rate = Number((1.1 + (Math.random() - 0.5) * 0.1).toFixed(2));
+      utt.volume = 0.92;
 
+      let settled = false;
       const advance = () => {
-        // Static pop between fragments + 120-350ms pause
-        this.playStaticBurst(0.08, 0.055 + this.strikesCount * 0.02);
-        const pause = 120 + Math.random() * 230;
+        if (settled) return;
+        settled = true;
+        if (this.speakGen !== myGen) return;
+        // Static pop between 2-3 word chunks + 40-130ms pause (higher static at strikes, never slower)
+        const staticGain = Math.min(0.15, 0.045 + this.strikesCount * 0.025);
+        this.playStaticBurst(0.065 + Math.min(0.05, this.strikesCount * 0.012), staticGain);
+        const pause = 40 + Math.random() * 90;
         const tid = window.setTimeout(speakNext, pause);
         this.timers.push(tid);
       };
@@ -226,6 +271,8 @@ class FieldRadioEngine {
   }
 
   private clearQueuedTimers() {
+    this.speakGen += 1;
+    this.isSpeaking = false;
     while (this.timers.length) {
       const t = this.timers.pop();
       if (t !== undefined) window.clearTimeout(t);
@@ -280,6 +327,22 @@ class FieldRadioEngine {
       this.emit({ signalBars: 0, lcdLine: 'FĂRĂ SEMNAL' });
     } else if (strikes === 2) {
       this.emit({ signalBars: 1, lcdLine: 'SEMNAL INSTABIL' });
+    }
+  }
+
+  setSolvedCount(count: number) {
+    this.solvedCount = count;
+  }
+
+  setFocusedModule(id: ModuleId | null) {
+    this.focusedModuleId = id;
+  }
+
+  recordPlayerAction(isModuleInput = false) {
+    const now = Date.now();
+    this.lastActionAt = now;
+    if (isModuleInput) {
+      this.lastModuleInputAt = now;
     }
   }
 
@@ -364,6 +427,35 @@ class FieldRadioEngine {
         () => this.emit({ transmitting: false })
       );
     }, 290);
+    this.timers.push(t);
+  }
+
+  announceModuleSkipped(id: ModuleId) {
+    this.clearQueuedTimers();
+    const numRo = RO_NUM_WORDS[id - 1] ?? String(id);
+    const subtitle = `„…bypass de urgență… mod zero ${numRo} confirmat…”`;
+
+    this.lastReplayPayload = {
+      roWords: ['bypass', 'de', 'urgență', 'confirmat'],
+      enWords: ['emergency', 'bypass', 'confirmed'],
+      subtitle,
+    };
+
+    this.triggerJolt();
+    this.typeLcdText(`MOD-0${id} · BYP`, false);
+    this.showSubtitle(subtitle);
+    this.emit({ errorFlash: false, signalBars: this.strikesCount >= 3 ? 0 : 2 });
+
+    this.playBeep(740, 70, 0.08, 0);
+    this.playBeep(990, 90, 0.09, 0.1);
+
+    const t = window.setTimeout(() => {
+      this.speakFragmented(
+        ['bypass', 'de', 'urgență', 'confirmat'],
+        ['emergency', 'bypass', 'confirmed'],
+        () => this.emit({ transmitting: false })
+      );
+    }, 220);
     this.timers.push(t);
   }
 
@@ -476,29 +568,77 @@ class FieldRadioEngine {
     });
   }
 
-  /** Periodic 40-90s faint static + rare (<1 per 3 min) spoken ambient line */
+  private pickContextualAmbientLine(now: number): RadioAmbientLine {
+    const idleElapsed = now - this.lastActionAt;
+    let pool: RadioAmbientLine[];
+
+    if (idleElapsed >= 60000) {
+      pool = RADIO_AMBIENT_LINES.filter((l) => l.category === 'idle');
+    } else {
+      const allowedCategories: RadioLineCategory[] = [
+        'atmosphere',
+        'timePressure',
+        'encouragement',
+      ];
+      if (this.solvedCount > 0) {
+        allowedCategories.push('progress');
+      }
+      if (this.strikesCount > 0) {
+        allowedCategories.push('strikes');
+        if (this.strikesCount >= 2) {
+          allowedCategories.push('strikes');
+        }
+      }
+      const cat =
+        allowedCategories[Math.floor(Math.random() * allowedCategories.length)];
+      pool = RADIO_AMBIENT_LINES.filter((l) => l.category === cat);
+    }
+
+    if (pool.length === 0) pool = RADIO_AMBIENT_LINES;
+    const filtered =
+      pool.length > 1 ? pool.filter((l) => l.ro !== this.lastAmbientRoText) : pool;
+    const picked = filtered[Math.floor(Math.random() * filtered.length)] ?? pool[0];
+    this.lastAmbientRoText = picked.ro;
+    return picked;
+  }
+
+  /** Periodic 14-35s static + 65% spoken colleague line (~40s cooldown, idle/activity aware) */
   startAmbientLoop() {
     this.stopAmbientLoop();
     const schedule = () => {
-      const delay = 40000 + Math.random() * 50000;
+      const delay = 14000 + Math.random() * 21000;
       this.ambientTimer = window.setTimeout(() => {
         if (
           !soundEngine.isMuted() &&
           (typeof document === 'undefined' || !document.hidden)
         ) {
-          this.playStaticBurst(1.1, 0.032);
+          const staticGain = Math.min(0.085, 0.03 + this.strikesCount * 0.015);
+          this.playStaticBurst(0.75, staticGain);
           this.emit({ signalBars: this.defaultSignalBars() });
 
           const now = Date.now();
-          if (now - this.lastAmbientSpokenAt > 180000 && Math.random() < 0.35) {
+          const actedRecently = now - this.lastActionAt < 4000;
+          const activeInOpenModule =
+            this.focusedModuleId !== null && now - this.lastModuleInputAt < 10000;
+          const cooldownReady = now - this.lastAmbientSpokenAt >= 40000;
+
+          if (
+            !this.isSpeaking &&
+            !this.snap.transmitting &&
+            !actedRecently &&
+            !activeInOpenModule &&
+            cooldownReady &&
+            Math.random() < 0.65
+          ) {
             this.lastAmbientSpokenAt = now;
-            const line =
-              RADIO_AMBIENT_LINES[
-                Math.floor(Math.random() * RADIO_AMBIENT_LINES.length)
-              ];
-            this.showSubtitle(line);
-            const cleanWords = line.replace(/[….]/g, ' ').trim().split(/\s+/).filter(Boolean);
-            this.speakFragmented(cleanWords, ['detective', 'stay', 'focused']);
+            const line = this.pickContextualAmbientLine(now);
+            this.showSubtitle(line.ro);
+            this.emit({ transmitting: true, weakBlink: true });
+            const cleanRo = line.ro.replace(/[….,!?]/g, ' ').trim().split(/\s+/).filter(Boolean);
+            const cleanEn = line.en.replace(/[….,!?]/g, ' ').trim().split(/\s+/).filter(Boolean);
+            this.speakFragmented(cleanRo, cleanEn, () => {
+              this.emit({ transmitting: false, weakBlink: false });
+            });
           }
         }
         schedule();

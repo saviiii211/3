@@ -363,18 +363,80 @@ body {
 }
 
 /* ============================================================================
-   NOIR ROOM, FILM GRAIN, LAMP SWAY & TABLECLOTH (det-* prefix)
+   NOIR DETECTIVE ROOM, FILM GRAIN, TUBE HUM, HAZE & NEON RAIN (det-* prefix)
    ============================================================================ */
-.det-wallpaper {
-  background-color: #141a17;
+@keyframes det-tube-buzz {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.94; }
+}
+
+.det-tube-buzz {
+  animation: det-tube-buzz 0.16s steps(2) infinite;
+}
+
+@keyframes det-fog-drift-a {
+  0%, 100% { transform: translate3d(-3%, 0%, 0); }
+  50% { transform: translate3d(4%, -2%, 0); }
+}
+
+@keyframes det-fog-drift-b {
+  0%, 100% { transform: translate3d(3%, 1%, 0); }
+  50% { transform: translate3d(-4%, -2%, 0); }
+}
+
+.det-fog-drift-a {
+  animation: det-fog-drift-a 46s ease-in-out infinite;
+  will-change: transform;
+}
+
+.det-fog-drift-b {
+  animation: det-fog-drift-b 58s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes det-rain-fall {
+  0% { background-position: 0 0, 14px -60px; }
+  100% { background-position: 0 120px, 14px 60px; }
+}
+
+.det-neon-rain {
   background-image:
     repeating-linear-gradient(
       90deg,
-      #1b221e 0px,
-      #1b221e 11px,
-      #141a17 11px,
-      #141a17 24px
+      rgba(223, 240, 255, 0.16) 0px,
+      rgba(223, 240, 255, 0.16) 1px,
+      transparent 1px,
+      transparent 22px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(217, 70, 239, 0.12) 0px,
+      rgba(217, 70, 239, 0.12) 1px,
+      transparent 1px,
+      transparent 31px
     );
+  background-size: 44px 60px, 62px 84px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.35) 100%);
+  animation: det-rain-fall 1.4s linear infinite;
+}
+
+@keyframes det-neon-glitch {
+  0%, 91%, 94%, 97%, 100% { opacity: 0; transform: translateX(0); }
+  92% { opacity: 0.72; transform: translateX(-6px); }
+  95% { opacity: 0.45; transform: translateX(4px); }
+}
+
+.det-neon-glitch {
+  animation: det-neon-glitch 9s steps(1) infinite;
+}
+
+@keyframes det-neon-pulse {
+  0%, 100% { opacity: 0.95; }
+  50% { opacity: 0.55; }
+}
+
+.det-neon-pulse {
+  animation: det-neon-pulse 0.75s ease-in-out infinite;
 }
 
 @keyframes det-grain-shift {
@@ -834,6 +896,12 @@ body {
   .det-film-grain,
   .det-lamp-pendulum,
   .det-dust-mote,
+  .det-tube-buzz,
+  .det-fog-drift-a,
+  .det-fog-drift-b,
+  .det-neon-rain,
+  .det-neon-glitch,
+  .det-neon-pulse,
   .det-crt-flicker,
   .det-crt-boot,
   .det-crt-shutdown,

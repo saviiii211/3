@@ -7,6 +7,7 @@ interface ModuleCardShellProps {
   strikePulse: boolean;
   justSolved: boolean;
   isFocused?: boolean;
+  isSkipped?: boolean;
   onInspect?: () => void;
   children: React.ReactNode;
 }
@@ -48,6 +49,7 @@ export const ModuleCardShell: React.FC<ModuleCardShellProps> = ({
   strikePulse,
   justSolved,
   isFocused = false,
+  isSkipped = false,
   onInspect,
   children,
 }) => {
@@ -216,14 +218,23 @@ export const ModuleCardShell: React.FC<ModuleCardShellProps> = ({
               </div>
             )}
 
-            {/* Green Rubber Stamp "DEZAMORSAT" on Solved Plate */}
+            {/* Green/Emergency Rubber Stamp on Solved Plate */}
             {status === 'solved' && (
               <div
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"
+                className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center px-2"
               >
-                <div className="det-rubber-stamp bg-[#e6e1d3]/65 text-xs sm:text-sm">
-                  DEZAMORSAT
+                <div
+                  className={`det-rubber-stamp bg-[#e6e1d3]/75 text-center whitespace-nowrap ${
+                    isSkipped ? 'text-[10.5px] sm:text-xs' : 'text-xs sm:text-sm'
+                  }`}
+                  style={
+                    isSkipped
+                      ? { color: '#991b1b', borderColor: '#991b1b', outlineColor: '#991b1b' }
+                      : undefined
+                  }
+                >
+                  {isSkipped ? 'DEZAMORSAT (URGENȚĂ)' : 'DEZAMORSAT'}
                 </div>
               </div>
             )}
@@ -244,8 +255,18 @@ export const ModuleCardShell: React.FC<ModuleCardShellProps> = ({
               aria-hidden="true"
               className="w-2.5 h-3.5 bg-[#d9cfab]/80 border border-[#8a8576]/40 shrink-0 -rotate-6"
             />
-            <p className="font-tech text-[10px] font-bold text-[#166534] tracking-wide truncate">
-              {isFocused ? 'DECRIPTARE REUȘITĂ — COORDONATE ACTUALIZATE' : 'DECRIPTAT ✓'}
+            <p
+              className={`font-tech text-[10px] font-bold tracking-wide truncate ${
+                isSkipped ? 'text-[#991b1b]' : 'text-[#166534]'
+              }`}
+            >
+              {isSkipped
+                ? isFocused
+                  ? 'BYPASS URGENȚĂ — COORDONATE ACTUALIZATE'
+                  : 'BYPASS URGENȚĂ ✓'
+                : isFocused
+                  ? 'DECRIPTARE REUȘITĂ — COORDONATE ACTUALIZATE'
+                  : 'DECRIPTAT ✓'}
             </p>
           </div>
         )}

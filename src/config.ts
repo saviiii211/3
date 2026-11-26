@@ -34,8 +34,8 @@ export const DESTINATIONS: EncryptedDestination[] = [
     id: 2,
     codeName: 'OBIECTIV CRIPTAT #2',
     moduleRequired: 4, // Deblocat după Modulul 4
-    lat: 45.3526,
-    lng: 25.5484,
+    lat: 45.3544,
+    lng: 25.5519,
   },
   {
     id: 3,
@@ -93,11 +93,272 @@ export const INTRO_TYPING_MS = 38;
 export const INTRO_TEXT =
   "[[AICI VA FI TEXTUL INTRODUCTIV — îl înlocuiesc eu ulterior]]";
 
-export const RADIO_AMBIENT_LINES: string[] = [
-  '…detectiv… mai ai… timp…',
-  '…aici… baza… mă auzi…',
-  '…semnalul… slăbește… verifică dosarul…',
-  '…atenție la… carcasă…',
+export type RadioLineCategory =
+  | 'atmosphere'
+  | 'timePressure'
+  | 'encouragement'
+  | 'progress'
+  | 'strikes'
+  | 'idle';
+
+export interface RadioAmbientLine {
+  category: RadioLineCategory;
+  ro: string;
+  en: string;
+}
+
+export const RADIO_AMBIENT_LINES: RadioAmbientLine[] = [
+  // Atmosferă (8)
+  {
+    category: 'atmosphere',
+    ro: '…liniște… prea multă liniște…',
+    en: 'silence… too much silence…',
+  },
+  {
+    category: 'atmosphere',
+    ro: '…ploaia bate… în geamul vechi…',
+    en: 'rain hitting… the old window…',
+  },
+  {
+    category: 'atmosphere',
+    ro: '…neonul de afară… bruiază banda…',
+    en: 'neon outside… jamming the band…',
+  },
+  {
+    category: 'atmosphere',
+    ro: '…receptorul prinde… ecou pe hol…',
+    en: 'receiver picks up… hall echo…',
+  },
+  {
+    category: 'atmosphere',
+    ro: '…camera asta… ascunde ceva rece…',
+    en: 'this room… hides something cold…',
+  },
+  {
+    category: 'atmosphere',
+    ro: '…purtătoarea vibrează… pe canalul trei…',
+    en: 'carrier humming… on channel three…',
+  },
+  {
+    category: 'atmosphere',
+    ro: '…umbre lungi… rămâi atent, detectiv…',
+    en: 'long shadows… stay sharp, detective…',
+  },
+  {
+    category: 'atmosphere',
+    ro: '…noaptea e grea… dar avem linie…',
+    en: 'heavy night… but we still have link…',
+  },
+
+  // Presiune de timp (8)
+  {
+    category: 'timePressure',
+    ro: '…detectiv… mai ai timp… mișcă…',
+    en: 'detective… still got time… move…',
+  },
+  {
+    category: 'timePressure',
+    ro: '…ține ritmul… timpul curge…',
+    en: 'keep the pace… clock is running…',
+  },
+  {
+    category: 'timePressure',
+    ro: '…secundele trec… nu ezita acum…',
+    en: 'seconds passing… do not hesitate now…',
+  },
+  {
+    category: 'timePressure',
+    ro: '…grăbește pasul… dar fără grabă oarbă…',
+    en: 'pick up speed… without blind haste…',
+  },
+  {
+    category: 'timePressure',
+    ro: '…fiecare minut… contează diseară…',
+    en: 'every minute… matters tonight…',
+  },
+  {
+    category: 'timePressure',
+    ro: '…cronometrul nu iartă… rămâi lucid…',
+    en: 'timer never forgives… stay sharp…',
+  },
+  {
+    category: 'timePressure',
+    ro: '…baza așteaptă… închide modulul…',
+    en: 'base is waiting… close that module…',
+  },
+  {
+    category: 'timePressure',
+    ro: '…noaptea se scurtează… înainte, detectiv…',
+    en: 'night grows short… push forward, detective…',
+  },
+
+  // Încurajare (8)
+  {
+    category: 'encouragement',
+    ro: '…respiră adânc… tu poți…',
+    en: 'breathe deep… you got this…',
+  },
+  {
+    category: 'encouragement',
+    ro: '…sunt pe linie… nu ești singur…',
+    en: 'on the line… you are not alone…',
+  },
+  {
+    category: 'encouragement',
+    ro: '…calmul bate… orice panică…',
+    en: 'calm beats… any panic…',
+  },
+  {
+    category: 'encouragement',
+    ro: '…ai fler bun… mergi pe instinct…',
+    en: 'good instinct… trust your read…',
+  },
+  {
+    category: 'encouragement',
+    ro: '…citește manualul… pas cu pas…',
+    en: 'read the manual… step by step…',
+  },
+  {
+    category: 'encouragement',
+    ro: '…carcasa ascunde detalii… verific-o…',
+    en: 'casing hides clues… inspect it…',
+  },
+  {
+    category: 'encouragement',
+    ro: '…mână sigură… ochi limpede…',
+    en: 'steady hand… clear eyes…',
+  },
+  {
+    category: 'encouragement',
+    ro: '…încă puțin… o scoatem la capăt…',
+    en: 'almost there… we pull through…',
+  },
+
+  // Reacție la progres (8)
+  {
+    category: 'progress',
+    ro: '…văd progres… continuă…',
+    en: 'I see progress… keep going…',
+  },
+  {
+    category: 'progress',
+    ro: '…încă un circuit… căzut curat…',
+    en: 'another circuit… dropped clean…',
+  },
+  {
+    category: 'progress',
+    ro: '…telemetria confirmă… mergi bine…',
+    en: 'telemetry confirms… moving well…',
+  },
+  {
+    category: 'progress',
+    ro: '…dispozitivul cedează… încet dar sigur…',
+    en: 'device is yielding… slow and steady…',
+  },
+  {
+    category: 'progress',
+    ro: '…semnalul devine… ceva mai clar…',
+    en: 'signal getting… slightly clearer…',
+  },
+  {
+    category: 'progress',
+    ro: '…bună treabă… trecem la următorul…',
+    en: 'good work… onto the next…',
+  },
+  {
+    category: 'progress',
+    ro: '…încă puțin… și închidem dosarul…',
+    en: 'almost done… closing the file…',
+  },
+  {
+    category: 'progress',
+    ro: '…rezistența scade… ține același ritm…',
+    en: 'resistance dropping… hold that pace…',
+  },
+
+  // Reacție la strike-uri (8)
+  {
+    category: 'strikes',
+    ro: '…tensiune mare… verifică de două ori…',
+    en: 'high voltage… double check first…',
+  },
+  {
+    category: 'strikes',
+    ro: '…eroarea doare… încetinește o secundă…',
+    en: 'errors sting… slow down a second…',
+  },
+  {
+    category: 'strikes',
+    ro: '…banda trosnește… verifică seria…',
+    en: 'band crackling… check the serial…',
+  },
+  {
+    category: 'strikes',
+    ro: '…nu ghici… confirmă regula exact…',
+    en: 'do not guess… confirm exact rule…',
+  },
+  {
+    category: 'strikes',
+    ro: '…alarma bâzâie… păstrează sângele rece…',
+    en: 'alarm buzzing… stay cool headed…',
+  },
+  {
+    category: 'strikes',
+    ro: '…scutură praful… și reia calm…',
+    en: 'shake it off… reset your focus…',
+  },
+  {
+    category: 'strikes',
+    ro: '…semnalul sare… verifică bateriile…',
+    en: 'signal jumping… verify battery count…',
+  },
+  {
+    category: 'strikes',
+    ro: '…atenție la detalii… o singură mișcare…',
+    en: 'watch the details… one clean move…',
+  },
+
+  // Inactivitate > 60s (8)
+  {
+    category: 'idle',
+    ro: '…detectiv… ești încă acolo…',
+    en: 'detective… are you still there…',
+  },
+  {
+    category: 'idle',
+    ro: '…aici baza… confirmă recepția…',
+    en: 'base calling… confirm reception…',
+  },
+  {
+    category: 'idle',
+    ro: '…semnalul tace… răspunde pe canal…',
+    en: 'channel silent… respond on band…',
+  },
+  {
+    category: 'idle',
+    ro: '…alô… mă auzi prin static…',
+    en: 'hello… do you copy through static…',
+  },
+  {
+    category: 'idle',
+    ro: '…nu te bloca… rotește carcasa…',
+    en: 'do not freeze… rotate the casing…',
+  },
+  {
+    category: 'idle',
+    ro: '…detectiv… s-a întrerupt linia…',
+    en: 'detective… did the line drop…',
+  },
+  {
+    category: 'idle',
+    ro: '…verifică manualul… dacă ești blocat…',
+    en: 'check the manual… if you are stuck…',
+  },
+  {
+    category: 'idle',
+    ro: '…purtătoarea așteaptă… mișcă o piesă…',
+    en: 'carrier waiting… make a move…',
+  },
 ];
 
 // Recomandat: MP4 H.264 + AAC, 720p, sub 40MB (nu se precachează în PWA)

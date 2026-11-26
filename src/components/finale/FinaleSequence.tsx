@@ -177,16 +177,22 @@ export const FinaleSequence: React.FC<FinaleSequenceProps> = ({
             transition={{ duration: 2.4, ease: [0.22, 1, 0.36, 1] }}
           >
             {/* Room Wall */}
-            <div className="absolute inset-x-0 top-0 h-[620px] det-wallpaper">
+            <div
+              className="absolute inset-x-0 top-0 h-[620px] overflow-hidden"
+              style={{
+                background: 'linear-gradient(180deg, #242e3a 0%, #151b23 48%, #0a0e13 100%)',
+              }}
+            >
+              <div className="absolute inset-x-0 bottom-0 h-[235px] bg-[#10151c] border-t border-[#4b5766]/35" />
               <div
                 className="absolute inset-0"
                 style={{
                   background:
-                    'radial-gradient(ellipse 35% 44% at 32% 45%, rgba(56, 38, 22, 0.45) 0%, transparent 72%)',
+                    'radial-gradient(ellipse 35% 44% at 32% 45%, rgba(5, 7, 10, 0.38) 0%, transparent 72%)',
                   mixBlendMode: 'multiply',
                 }}
               />
-              <div className="absolute inset-x-0 bottom-0 h-6 bg-[#0d0f0e] border-t border-[#262b26]/50" />
+              <div className="absolute inset-x-0 bottom-0 h-6 bg-[#0a0e13] border-t border-[#4b5766]/30" />
             </div>
 
             {/* Plank Floor */}

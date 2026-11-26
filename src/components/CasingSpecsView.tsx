@@ -250,24 +250,63 @@ export const ConnectorPortsHardware: React.FC<CasingHardwareProps> = ({
   casing,
   compact = false,
   includeTestIds = false,
-}) => (
-  <div
-    data-testid={includeTestIds ? 'casing-ports' : undefined}
-    data-has-parallel={includeTestIds ? (casing.hasParallelPort ? 'true' : 'false') : undefined}
-    className={`bg-[#1a1d1f] border-2 border-[#0b0d0e] shadow-[inset_3px_4px_12px_rgba(0,0,0,0.86)] flex flex-wrap items-center justify-center ${
-      compact ? 'gap-2 p-2.5' : 'gap-4 p-4'
-    }`}
-  >
-    {casing.ports.map((p, idx) => (
-      <div
-        key={`${p}-${idx}`}
-        className="bg-[#25282c] border border-[#3e4248] p-2 shadow-inner"
-      >
-        <PortSvg type={p} compact={compact} />
+}) => {
+  const hasParallel = casing.ports.includes('parallel');
+  const hasSerial = casing.ports.includes('serial');
+  const secondaryOrder: PortType[] = ['ps2', 'rj45', 'dvid', 'rca'];
+  const secondaryPorts = secondaryOrder.filter((p) => casing.ports.includes(p));
+
+  return (
+    <div
+      data-testid={includeTestIds ? 'casing-ports' : undefined}
+      data-has-parallel={includeTestIds ? (casing.hasParallelPort ? 'true' : 'false') : undefined}
+      className={`bg-[#15181c] border-2 border-[#080a0c] shadow-[inset_4px_6px_16px_rgba(0,0,0,0.92)] flex flex-col items-stretch ${
+        compact ? 'gap-2 p-2.5' : 'gap-2.5 p-3.5'
+      }`}
+    >
+      <div className="flex items-center justify-between border-b border-[#2e343c] pb-1.5 px-1">
+        <span className="font-tech text-[10px] font-bold tracking-[0.22em] text-[#eceae2] uppercase">
+          MAGISTRALĂ I/O
+        </span>
+        <span className="font-tech text-[9px] text-[#8a8576]">
+          {casing.ports.length} PORT{casing.ports.length === 1 ? '' : 'URI'}
+        </span>
       </div>
-    ))}
-  </div>
-);
+
+      {/* Top wide row: PARALEL 25P (pink/magenta) */}
+      {hasParallel && (
+        <div className="bg-[#212429] border border-[#3a3f47] p-2 shadow-inner flex items-center justify-center">
+          <PortSvg type="parallel" compact={compact} />
+        </div>
+      )}
+
+      {/* Second row: SERIAL 9P (teal) */}
+      {hasSerial && (
+        <div className="bg-[#212429] border border-[#3a3f47] p-2 shadow-inner flex items-center justify-center">
+          <PortSvg type="serial" compact={compact} />
+        </div>
+      )}
+
+      {/* Bottom 2-column row: PS/2, RJ45, DVI-D, RCA (only whichever exist in casing.ports) */}
+      {secondaryPorts.length > 0 && (
+        <div
+          className={`grid gap-2 ${
+            secondaryPorts.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
+          }`}
+        >
+          {secondaryPorts.map((p) => (
+            <div
+              key={p}
+              className="bg-[#212429] border border-[#3a3f47] p-2 shadow-inner flex items-center justify-center"
+            >
+              <PortSvg type={p} compact={compact} />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface CasingLoupeModalProps {
   open: boolean;
@@ -298,7 +337,7 @@ export const CasingSpecsView: React.FC<CasingLoupeModalProps> = ({ open, casing,
               FOTOGRAFIE DOSAR 03
             </span>
             <h2 className="font-display text-base sm:text-lg font-bold text-[#15171a]">
-              Inspecție Carcasă & Conectori
+              Inspecție Carcasă
             </h2>
           </div>
 
@@ -325,13 +364,6 @@ export const CasingSpecsView: React.FC<CasingLoupeModalProps> = ({ open, casing,
               Fața Superioară · Capac Metalic & Celule (AA / 1.5V D)
             </p>
             <BatteryBayHardware casing={casing} includeTestIds />
-          </div>
-
-          <div className="bg-[#f3eee2] border border-[#8a8576] p-3">
-            <p className="font-tech text-[10px] font-bold tracking-widest text-[#3a382f] mb-2 uppercase">
-              Fața Dreaptă · Magistrală I/O Laterală
-            </p>
-            <ConnectorPortsHardware casing={casing} includeTestIds />
           </div>
         </div>
       </div>

@@ -72,6 +72,7 @@ export function createInitialMissionState(rng: () => number = Math.random): Pers
   const casing = generateBombCasing(rng);
   return {
     solvedModules: [],
+    skippedModules: [],
     highestUnlocked: 1,
     strikes: 0,
     muted: false,
@@ -127,6 +128,21 @@ export function markModuleSolved(state: PersistedMissionState, moduleId: ModuleI
   };
 }
 
+export function markModuleSkipped(state: PersistedMissionState, moduleId: ModuleId): PersistedMissionState {
+  const skippedSet = new Set<ModuleId>(state.skippedModules ?? []);
+  skippedSet.add(moduleId);
+  const skippedModules = Array.from(skippedSet).sort((a, b) => a - b);
+  const solvedState = markModuleSolved(state, moduleId);
+  return {
+    ...solvedState,
+    skippedModules,
+    knobs:
+      moduleId === 6
+        ? { ...solvedState.knobs, secondsLeft: 45 }
+        : solvedState.knobs,
+  };
+}
+
 export function loadMissionState(): PersistedMissionState {
   if (typeof window === 'undefined') {
     return createInitialMissionState();
@@ -138,7 +154,10 @@ export function loadMissionState(): PersistedMissionState {
     if (!parsed || !parsed.casing || !Array.isArray(parsed.solvedModules)) {
       return createInitialMissionState();
     }
-    return parsed;
+    return {
+      ...parsed,
+      skippedModules: Array.isArray(parsed.skippedModules) ? parsed.skippedModules : [],
+    };
   } catch {
     return createInitialMissionState();
   }

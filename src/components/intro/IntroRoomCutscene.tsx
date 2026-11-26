@@ -191,17 +191,33 @@ export const IntroRoomCutscene: React.FC<IntroRoomCutsceneProps> = ({
           ease: [0.22, 1, 0.36, 1],
         }}
       >
-        {/* ================= BACK WALL + PEELING WALLPAPER + COBWEB + PLASTER ================= */}
+        {/* ================= BACK WALL + WAINSCOT + DAMPNESS + NEON SPILL ================= */}
         <div
           aria-hidden="true"
-          className="absolute inset-x-0 top-0 h-[620px] det-wallpaper overflow-hidden"
+          className="absolute inset-x-0 top-0 h-[620px] overflow-hidden"
+          style={{
+            background: 'linear-gradient(180deg, #2a3440 0%, #151b23 48%, #0a0e13 100%)',
+          }}
         >
+          {/* Lower wainscot band (#10151c + #4b5766 trim) */}
+          <div className="absolute inset-x-0 bottom-0 h-[235px] bg-[#10151c] border-t border-[#4b5766]/35" />
+
+          {/* Subtle right neon spill */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background:
+                'radial-gradient(ellipse 46% 62% at 100% 34%, rgba(217, 70, 239, 0.24) 0%, rgba(139, 92, 246, 0.1) 45%, transparent 76%)',
+              mixBlendMode: 'screen',
+            }}
+          />
+
           {/* Damp stain */}
           <div
             className="absolute inset-0"
             style={{
               background:
-                'radial-gradient(ellipse 35% 44% at 32% 45%, rgba(56, 38, 22, 0.55) 0%, transparent 72%), radial-gradient(ellipse 30% 40% at 76% 32%, rgba(44, 34, 24, 0.45) 0%, transparent 72%)',
+                'radial-gradient(ellipse 35% 44% at 32% 45%, rgba(5, 7, 10, 0.42) 0%, transparent 72%), radial-gradient(ellipse 30% 40% at 76% 32%, rgba(5, 7, 10, 0.35) 0%, transparent 72%)',
               mixBlendMode: 'multiply',
             }}
           />
@@ -260,7 +276,7 @@ export const IntroRoomCutscene: React.FC<IntroRoomCutsceneProps> = ({
           </svg>
 
           {/* Baseboard */}
-          <div className="absolute inset-x-0 bottom-0 h-6 bg-[#0d0f0e] border-t border-[#262b26]/50" />
+          <div className="absolute inset-x-0 bottom-0 h-6 bg-[#0a0e13] border-t border-[#4b5766]/30" />
         </div>
 
         {/* ================= WOODEN PLANK FLOOR ================= */}

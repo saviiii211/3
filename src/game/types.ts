@@ -117,6 +117,7 @@ export interface MissionMetaItem {
 
 export interface PersistedMissionState {
   solvedModules: ModuleId[];
+  skippedModules: ModuleId[];
   highestUnlocked: ModuleId;
   strikes: number;
   muted: boolean;

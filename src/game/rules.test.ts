@@ -50,6 +50,8 @@ import {
   createInitialMissionState,
   getActiveDestination,
   isGpsUnlocked,
+  loadMissionState,
+  markModuleSkipped,
   markModuleSolved,
 } from './missionState';
 import type { BombCasing, MemoryState } from './types';
@@ -302,4 +304,50 @@ test('Mission Progression: GPS unlocks after Module 1 and routes Destinations 1-
 
   mission = markModuleSolved(mission, 7);
   assert.equal(getActiveDestination(mission)?.id, 5);
+  assert.deepEqual(mission.skippedModules, []);
+});
+
+test('Emergency Skip: marks module skipped/solved without strike, unlocks GPS & destinations, and resets Mod 6 timer', () => {
+  const rng = makeSeededRng(606);
+  let mission = createInitialMissionState(rng);
+  assert.deepEqual(mission.skippedModules, []);
+
+  // Skip Module 1 -> unlocks GPS + Module 2, 0 strikes
+  mission = markModuleSkipped(mission, 1);
+  assert.deepEqual(mission.solvedModules, [1]);
+  assert.deepEqual(mission.skippedModules, [1]);
+  assert.equal(mission.highestUnlocked, 2);
+  assert.equal(mission.strikes, 0);
+  assert.equal(isGpsUnlocked(mission), true);
+
+  // Normal solve on Module 2 does not add to skippedModules
+  mission = markModuleSolved(mission, 2);
+  assert.deepEqual(mission.solvedModules, [1, 2]);
+  assert.deepEqual(mission.skippedModules, [1]);
+
+  // Skip Module 3 -> unlocks Objective #1
+  mission = markModuleSkipped(mission, 3);
+  assert.equal(getActiveDestination(mission)?.id, 1);
+  assert.deepEqual(mission.skippedModules, [1, 3]);
+
+  // Simulate Module 6 timer running down, then skipping Module 6 resets secondsLeft to 45
+  mission = markModuleSolved(mission, 4);
+  mission = markModuleSolved(mission, 5);
+  mission = {
+    ...mission,
+    knobs: { ...mission.knobs, secondsLeft: 12 },
+  };
+  mission = markModuleSkipped(mission, 6);
+  assert.equal(mission.knobs.secondsLeft, 45);
+  assert.equal(getActiveDestination(mission)?.id, 4);
+  assert.deepEqual(mission.skippedModules, [1, 3, 6]);
+
+  // Idempotent if skipped again
+  mission = markModuleSkipped(mission, 6);
+  assert.deepEqual(mission.skippedModules, [1, 3, 6]);
+  assert.equal(mission.strikes, 0);
+
+  // SSR / non-browser fallback returns valid skippedModules array
+  const loaded = loadMissionState();
+  assert.ok(Array.isArray(loaded.skippedModules));
 });

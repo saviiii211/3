@@ -36,7 +36,7 @@ export const RadioHandset: React.FC<RadioHandsetProps> = ({
   };
 
   return (
-    <div className="pointer-events-none fixed bottom-[104px] sm:bottom-4 right-1.5 sm:right-3.5 z-[35] flex items-end gap-2">
+    <div className="pointer-events-none fixed bottom-[max(0.5rem,env(safe-area-inset-bottom))] sm:bottom-4 right-2 sm:right-3.5 z-[35] flex items-end gap-2">
       {/* 3-second Typed Paper Subtitle Slip beside Walkie-Talkie */}
       {snap.subtitle && (
         <div
@@ -53,13 +53,13 @@ export const RadioHandset: React.FC<RadioHandsetProps> = ({
         type="button"
         onClick={handleTap}
         aria-label="Stație radio portabilă: repetă ultimul mesaj"
-        className="pointer-events-auto relative w-[82px] sm:w-[132px] min-h-[44px] cursor-pointer select-none transition-transform duration-150 focus-visible:outline-2 focus-visible:outline-[#ffd9a0]"
+        className="pointer-events-auto relative w-[72px] sm:w-[132px] min-h-[44px] cursor-pointer select-none transition-transform duration-150 focus-visible:outline-2 focus-visible:outline-[#ffd9a0]"
         style={{ transform: `rotate(-12deg) ${snap.jolting ? 'translateY(-6px)' : ''}` }}
       >
         {/* Stubby Black Antenna */}
         <div
           aria-hidden="true"
-          className="ml-3 w-2.5 sm:w-4 h-4 sm:h-9 bg-gradient-to-r from-[#232527] via-[#17181a] to-[#0a0b0c] border-x border-[#3a3c3e] rounded-t-sm shadow-md"
+          className="ml-3 w-2.5 sm:w-4 h-3 sm:h-9 bg-gradient-to-r from-[#232527] via-[#17181a] to-[#0a0b0c] border-x border-[#3a3c3e] rounded-t-sm shadow-md"
         />
 
         {/* Rugged Yellow + Black Rubberized Body */}
