@@ -1,0 +1,853 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Manual de dezamorsare — Operațiunea 3 Ani</title>
+  <style>
+    :root {
+      --bg: #050606;
+      --wall: #141a17;
+      --surface: #1b221e;
+      --surface-alt: #0f1411;
+      --lamp: #ffd9a0;
+      --lamp-dim: #e8b66f;
+      --ivory: #e6e1d3;
+      --ivory-dim: #b5b0a2;
+      --red: #c0281c;
+      --led-red: #ff3b2a;
+      --led-green: #3ddc84;
+      --led-amber: #e89b2d;
+      --lcd-fg: #9be15d;
+      --lcd-bg: #1b2a12;
+      --navy: #101a2b;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--ivory);
+      font-family: 'Courier Prime', 'Courier New', monospace;
+      line-height: 1.55;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      background-image:
+        radial-gradient(ellipse 80% 45% at 50% 0%, rgba(255, 217, 160, 0.06), transparent 65%),
+        linear-gradient(180deg, #050606 0%, #0d120f 100%);
+      padding-bottom: 3rem;
+    }
+
+    .display {
+      font-family: 'Oswald', 'Arial Narrow', Impact, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .lcd {
+      font-family: 'VT323', 'Courier Prime', monospace;
+      background: var(--lcd-bg);
+      color: var(--lcd-fg);
+      border: 1px solid rgba(155, 225, 93, 0.35);
+      padding: 0.15rem 0.45rem;
+      display: inline-block;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(5, 6, 6, 0.94);
+      border-bottom: 1px solid rgba(230, 225, 211, 0.2);
+      backdrop-filter: blur(6px);
+      padding: 0.55rem 0.75rem;
+    }
+
+    .nav-strip {
+      max-width: 980px;
+      margin: 0 auto;
+      display: flex;
+      gap: 0.35rem;
+      overflow-x: auto;
+      scrollbar-width: thin;
+      padding-bottom: 0.15rem;
+    }
+
+    .nav-btn {
+      flex: 0 0 auto;
+      min-height: 40px;
+      padding: 0.35rem 0.65rem;
+      background: var(--navy);
+      color: var(--ivory);
+      border: 1px solid rgba(230, 225, 211, 0.28);
+      border-radius: 2px;
+      font-family: 'Oswald', 'Arial Narrow', sans-serif;
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-decoration: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      white-space: nowrap;
+    }
+
+    .nav-btn:hover, .nav-btn.active {
+      border-color: var(--lamp);
+      color: var(--lamp);
+    }
+
+    main {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 1rem 0.85rem 2.5rem;
+    }
+
+    .hero {
+      background: var(--wall);
+      border: 1px solid rgba(230, 225, 211, 0.25);
+      border-top: 3px solid var(--red);
+      padding: 1rem 1.1rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .hero-kicker {
+      color: var(--lamp-dim);
+      font-size: 0.78rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin: 0 0 0.25rem;
+    }
+
+    .hero h1 {
+      margin: 0 0 0.35rem;
+      font-size: clamp(1.35rem, 3.2vw, 1.9rem);
+      color: var(--ivory);
+    }
+
+    .golden-rule {
+      margin-top: 0.75rem;
+      padding: 0.65rem 0.8rem;
+      background: rgba(192, 40, 28, 0.14);
+      border: 1px solid rgba(192, 40, 28, 0.6);
+      font-size: 0.88rem;
+    }
+
+    .golden-rule strong { color: #ff8a80; }
+
+    section.module {
+      background: var(--surface);
+      border: 1px solid rgba(230, 225, 211, 0.2);
+      padding: 1rem;
+      margin-bottom: 1.2rem;
+      scroll-margin-top: 64px;
+    }
+
+    .mod-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.5rem;
+      border-bottom: 2px solid var(--red);
+      padding-bottom: 0.45rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .mod-code {
+      background: var(--navy);
+      color: var(--lamp);
+      border: 1px solid rgba(255, 217, 160, 0.35);
+      padding: 0.15rem 0.5rem;
+      font-size: 0.78rem;
+    }
+
+    .mod-head h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      color: var(--lamp);
+    }
+
+    .mod-stage {
+      font-size: 0.78rem;
+      color: var(--ivory-dim);
+    }
+
+    p { margin: 0 0 0.7rem; font-size: 0.92rem; }
+
+    .table-wrap {
+      overflow-x: auto;
+      margin: 0.65rem 0 0.8rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      background: var(--surface-alt);
+    }
+
+    th, td {
+      border: 1px solid rgba(230, 225, 211, 0.18);
+      padding: 0.45rem 0.55rem;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #0d110f;
+      color: var(--lamp);
+      font-family: 'Oswald', 'Arial Narrow', sans-serif;
+      letter-spacing: 0.06em;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    tr:nth-child(even) td { background: rgba(255, 255, 255, 0.02); }
+
+    .code-badge {
+      display: inline-block;
+      min-width: 1.6rem;
+      text-align: center;
+      font-weight: 700;
+      padding: 0.05rem 0.35rem;
+      background: var(--navy);
+      color: var(--lamp);
+      border: 1px solid rgba(255, 217, 160, 0.35);
+    }
+
+    .code-C { color: var(--led-green); border-color: rgba(61, 220, 132, 0.45); }
+    .code-D { color: #ff8a80; border-color: rgba(255, 59, 42, 0.45); }
+    .code-S, .code-P, .code-B { color: var(--led-amber); border-color: rgba(232, 155, 45, 0.45); }
+
+    .notes-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(56px, 1fr));
+      gap: 0.35rem;
+      margin-top: 0.5rem;
+    }
+
+    .note-box {
+      background: var(--surface-alt);
+      border: 1px solid rgba(230, 225, 211, 0.22);
+      padding: 0.35rem;
+      text-align: center;
+    }
+
+    .note-box label {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--lamp-dim);
+      margin-bottom: 0.2rem;
+    }
+
+    .note-box input {
+      width: 100%;
+      background: #050606;
+      border: 1px solid rgba(230, 225, 211, 0.25);
+      color: var(--ivory);
+      font-family: inherit;
+      font-size: 0.85rem;
+      text-align: center;
+      padding: 0.2rem;
+    }
+
+    .search-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      margin: 0.5rem 0 0.75rem;
+    }
+
+    .search-bar input {
+      flex: 1 1 200px;
+      min-height: 40px;
+      padding: 0.4rem 0.65rem;
+      background: #050606;
+      border: 1px solid rgba(230, 225, 211, 0.35);
+      color: var(--ivory);
+      font-family: inherit;
+      font-size: 0.9rem;
+    }
+
+    .search-bar button, .reset-btn {
+      min-height: 40px;
+      padding: 0.35rem 0.75rem;
+      background: var(--navy);
+      color: var(--ivory);
+      border: 1px solid rgba(230, 225, 211, 0.3);
+      font-family: inherit;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    .seq-check {
+      width: 24px;
+      height: 24px;
+      accent-color: var(--led-green);
+      cursor: pointer;
+    }
+
+    .mazes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(195px, 1fr));
+      gap: 0.85rem;
+      margin-top: 0.75rem;
+    }
+
+    .maze-card {
+      background: var(--surface-alt);
+      border: 1px solid rgba(230, 225, 211, 0.22);
+      padding: 0.65rem;
+      text-align: center;
+    }
+
+    .maze-title {
+      font-size: 0.82rem;
+      color: var(--lamp);
+      margin-bottom: 0.4rem;
+    }
+
+    .led-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      flex-wrap: nowrap;
+    }
+
+    .led-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      display: inline-block;
+      border: 1px solid #3c403d;
+      background: #101211;
+    }
+
+    .led-dot.on {
+      background: var(--led-red);
+      border-color: #ff9c94;
+      box-shadow: 0 0 5px rgba(255, 59, 42, 0.6);
+    }
+
+    .led-sep {
+      width: 4px;
+      display: inline-block;
+    }
+
+    @media (max-width: 440px) {
+      th, td {
+        padding: 0.35rem 0.35rem;
+        font-size: 0.78rem;
+      }
+      .led-dot {
+        width: 8px;
+        height: 8px;
+      }
+    }
+
+    .pw-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+      gap: 0.4rem;
+      margin-top: 0.6rem;
+    }
+
+    .pw-word {
+      background: var(--surface-alt);
+      border: 1px solid rgba(230, 225, 211, 0.2);
+      padding: 0.35rem 0.4rem;
+      text-align: center;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--ivory);
+    }
+
+    .pw-word.dimmed {
+      opacity: 0.22;
+    }
+
+    .hidden-row { display: none; }
+  </style>
+</head>
+<body>
+  <nav class="topbar" aria-label="Secțiuni manual">
+    <div class="nav-strip">
+      <a class="nav-btn active" href="#misiune">Misiune</a>
+      <a class="nav-btn" href="#mod-01">01 Memoria</a>
+      <a class="nav-btn" href="#mod-02">02 Fire complicate</a>
+      <a class="nav-btn" href="#mod-03">03 Cine e pe primul loc?</a>
+      <a class="nav-btn" href="#mod-04">04 Secvențele de fire</a>
+      <a class="nav-btn" href="#mod-05">05 Labirintele</a>
+      <a class="nav-btn" href="#mod-06">06 Butonul rotativ</a>
+      <a class="nav-btn" href="#mod-07">07 Parolele secrete</a>
+      <a class="nav-btn" href="#anexa">Anexă Carcasă</a>
+    </div>
+  </nav>
+
+  <main>
+    <header class="hero" id="misiune">
+      <p class="hero-kicker">Manual Oficial de Dezamorsare · Ediție Aniversară (3 Ani)</p>
+      <h1 class="display">Manualul Expertului</h1>
+      <p>Protocol tactic de operare pentru cele 7 module de securitate — Traseu: Fetești → București → Sinaia.</p>
+      <div class="golden-rule">
+        <strong>REGULA DE AUR A MISIUNII:</strong> Defuser-ul nu are voie să vadă acest manual, iar Expertul nu are voie să vadă ecranul dispozitivului. Comunicați exclusiv verbal, clar și precis. Fiecare modul dezamorsat deblochează automat pasul următor și traseul GPS.
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Modul</th><th>Etapă</th><th>Denumire</th><th>Efect la dezamorsare</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>01</strong></td><td>Tren: Fetești → București</td><td>Memoria</td><td>Inițializare sistem &amp; primul unlock GPS</td></tr>
+            <tr><td><strong>02</strong></td><td>Tren: București → Sinaia</td><td>Fire Complicate</td><td>Validare tranzit &amp; pregătire Sinaia</td></tr>
+            <tr><td><strong>03</strong></td><td>Sinaia — Destinația 1</td><td>Cine e pe primul loc?</td><td>Deblochează traseul GPS spre Obiectiv #1</td></tr>
+            <tr><td><strong>04</strong></td><td>Sinaia — Destinația 2</td><td>Secvențele de Fire</td><td>Deblochează traseul GPS spre Obiectiv #2</td></tr>
+            <tr><td><strong>05</strong></td><td>Sinaia — Destinația 3</td><td>Labirintele</td><td>Deblochează traseul GPS spre Obiectiv #3</td></tr>
+            <tr><td><strong>06</strong></td><td>Sinaia — Destinația 4</td><td>Butonul Rotativ</td><td>Deblochează traseul GPS spre Obiectiv #4</td></tr>
+            <tr><td><strong>07</strong></td><td>Sinaia — Destinația 5</td><td>Parolele Secrete</td><td>Deblochează Obiectivul Final &amp; încheie misiunea</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </header>
+
+    <!-- 01 MEMORIA -->
+    <section class="module" id="mod-01">
+      <div class="mod-head">
+        <div>
+          <span class="mod-code display">01 Memoria</span>
+          <span class="mod-stage"> · Tren Fetești → București</span>
+        </div>
+        <h2 class="display">Memoria (Memory)</h2>
+      </div>
+      <p>Apasă butonul corect pentru a avansa la etapa următoare (5 etape în total). Apăsarea unui buton greșit resetează modulul la Etapa 1. Pozițiile se numără întotdeauna de la stânga la dreapta (1, 2, 3, 4). Notează atât <strong>poziția</strong>, cât și <strong>eticheta</strong> apăsată la fiecare etapă.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Etapă</th><th>Display = 1</th><th>Display = 2</th><th>Display = 3</th><th>Display = 4</th></tr>
+          </thead>
+          <tbody>
+            <tr><th>Etapa 1</th><td>Poziția a 2-a</td><td>Poziția a 2-a</td><td>Poziția a 3-a</td><td>Poziția a 4-a</td></tr>
+            <tr><th>Etapa 2</th><td>Eticheta „4”</td><td>Aceeași poziție ca Etapa 1</td><td>Poziția 1</td><td>Aceeași poziție ca Etapa 1</td></tr>
+            <tr><th>Etapa 3</th><td>Aceeași etichetă ca Etapa 2</td><td>Aceeași etichetă ca Etapa 1</td><td>Poziția a 3-a</td><td>Eticheta „4”</td></tr>
+            <tr><th>Etapa 4</th><td>Aceeași poziție ca Etapa 1</td><td>Poziția 1</td><td>Aceeași poziție ca Etapa 2</td><td>Aceeași poziție ca Etapa 2</td></tr>
+            <tr><th>Etapa 5</th><td>Aceeași etichetă ca Etapa 1</td><td>Aceeași etichetă ca Etapa 2</td><td>Aceeași etichetă ca Etapa 4</td><td>Aceeași etichetă ca Etapa 3</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:0.8rem;color:var(--lamp-dim);margin-bottom:0.25rem;">Fișă rapidă de notițe (Etapele 1–5: Poziție / Etichetă):</p>
+      <div class="notes-grid">
+        <div class="note-box"><label>E1 (Poz/Eti)</label><input type="text" placeholder="ex: 2 / 4" aria-label="Notiță Etapa 1" /></div>
+        <div class="note-box"><label>E2 (Poz/Eti)</label><input type="text" placeholder="ex: 1 / 3" aria-label="Notiță Etapa 2" /></div>
+        <div class="note-box"><label>E3 (Poz/Eti)</label><input type="text" placeholder="ex: 3 / 1" aria-label="Notiță Etapa 3" /></div>
+        <div class="note-box"><label>E4 (Poz/Eti)</label><input type="text" placeholder="ex: 2 / 2" aria-label="Notiță Etapa 4" /></div>
+        <div class="note-box"><label>E5 (Poz/Eti)</label><input type="text" placeholder="final" aria-label="Notiță Etapa 5" /></div>
+      </div>
+    </section>
+
+    <!-- 02 FIRE COMPLICATE -->
+    <section class="module" id="mod-02">
+      <div class="mod-head">
+        <div>
+          <span class="mod-code display">02 Fire complicate</span>
+          <span class="mod-stage"> · Tren București → Sinaia</span>
+        </div>
+        <h2 class="display">Fire Complicate (Complicated Wires)</h2>
+      </div>
+      <p>Fiecare fir are un <strong>LED</strong> deasupra și un spațiu pentru simbolul <strong>★</strong> dedesubt. Firele pot fi albe, roșii, albastre sau cu dungi. Verifică <a href="#anexa" style="color:var(--lamp);">Anexa Carcasă</a> pentru S, P și B.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Cod</th><th>Instrucțiune de acțiune</th></tr></thead>
+          <tbody>
+            <tr><td><span class="code-badge code-C">C</span></td><td><strong>Taie firul</strong> imediat.</td></tr>
+            <tr><td><span class="code-badge code-D">D</span></td><td><strong>Nu tăia firul</strong> (lasă-l intact).</td></tr>
+            <tr><td><span class="code-badge code-S">S</span></td><td>Taie firul numai dacă <strong>ultima cifră a numărului de serie este pară</strong> (0, 2, 4, 6, 8).</td></tr>
+            <tr><td><span class="code-badge code-P">P</span></td><td>Taie firul numai dacă bomba are un <strong>port paralel</strong> (conector roz/violet 25 pini).</td></tr>
+            <tr><td><span class="code-badge code-B">B</span></td><td>Taie firul numai dacă bomba are <strong>două sau mai multe baterii</strong> (AA + D).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Culoarea firului</th><th>Are Roșu?</th><th>Are Albastru?</th><th>Simbol ★</th><th>LED aprins</th><th>Decizie</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Alb simplu</td><td>Nu</td><td>Nu</td><td>Nu</td><td>Nu</td><td><span class="code-badge code-C">C</span></td></tr>
+            <tr><td>Alb simplu</td><td>Nu</td><td>Nu</td><td>Da (★)</td><td>Nu</td><td><span class="code-badge code-C">C</span></td></tr>
+            <tr><td>Alb simplu</td><td>Nu</td><td>Nu</td><td>Nu</td><td>Da</td><td><span class="code-badge code-D">D</span></td></tr>
+            <tr><td>Alb simplu</td><td>Nu</td><td>Nu</td><td>Da (★)</td><td>Da</td><td><span class="code-badge code-B">B</span></td></tr>
+            <tr><td>Roșu (sau Roșu/Alb)</td><td>Da</td><td>Nu</td><td>Nu</td><td>Nu</td><td><span class="code-badge code-S">S</span></td></tr>
+            <tr><td>Roșu (sau Roșu/Alb)</td><td>Da</td><td>Nu</td><td>Da (★)</td><td>Nu</td><td><span class="code-badge code-C">C</span></td></tr>
+            <tr><td>Roșu (sau Roșu/Alb)</td><td>Da</td><td>Nu</td><td>Nu</td><td>Da</td><td><span class="code-badge code-B">B</span></td></tr>
+            <tr><td>Roșu (sau Roșu/Alb)</td><td>Da</td><td>Nu</td><td>Da (★)</td><td>Da</td><td><span class="code-badge code-B">B</span></td></tr>
+            <tr><td>Albastru (sau Albastru/Alb)</td><td>Nu</td><td>Da</td><td>Nu</td><td>Nu</td><td><span class="code-badge code-S">S</span></td></tr>
+            <tr><td>Albastru (sau Albastru/Alb)</td><td>Nu</td><td>Da</td><td>Da (★)</td><td>Nu</td><td><span class="code-badge code-D">D</span></td></tr>
+            <tr><td>Albastru (sau Albastru/Alb)</td><td>Nu</td><td>Da</td><td>Nu</td><td>Da</td><td><span class="code-badge code-P">P</span></td></tr>
+            <tr><td>Albastru (sau Albastru/Alb)</td><td>Nu</td><td>Da</td><td>Da (★)</td><td>Da</td><td><span class="code-badge code-P">P</span></td></tr>
+            <tr><td>Roșu + Albastru</td><td>Da</td><td>Da</td><td>Nu</td><td>Nu</td><td><span class="code-badge code-S">S</span></td></tr>
+            <tr><td>Roșu + Albastru</td><td>Da</td><td>Da</td><td>Da (★)</td><td>Nu</td><td><span class="code-badge code-P">P</span></td></tr>
+            <tr><td>Roșu + Albastru</td><td>Da</td><td>Da</td><td>Nu</td><td>Da</td><td><span class="code-badge code-S">S</span></td></tr>
+            <tr><td>Roșu + Albastru</td><td>Da</td><td>Da</td><td>Da (★)</td><td>Da</td><td><span class="code-badge code-D">D</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 03 CINE E PE PRIMUL LOC? -->
+    <section class="module" id="mod-03">
+      <div class="mod-head">
+        <div>
+          <span class="mod-code display">03 Cine e pe primul loc?</span>
+          <span class="mod-stage"> · Sinaia — Destinația 1</span>
+        </div>
+        <h2 class="display">Cine e pe primul loc? (Who's on First)</h2>
+      </div>
+      <p><strong>Pasul 1:</strong> Citește cuvântul de pe Display-ul de sus și găsește în Tabelul 1 <strong>poziția butonului de citit</strong> (nu îl apăsa!).<br />
+      <strong>Pasul 2:</strong> Citește eticheta de pe acel buton și caut-o în Tabelul 2. Apasă <strong>primul cuvânt din listă</strong> care apare printre cele 6 butoane.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Poziția butonului de citit</th><th>Cuvântul afișat pe Display (sus)</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Stânga – Sus</strong></td><td>UR</td></tr>
+            <tr><td><strong>Dreapta – Sus</strong></td><td>FIRST, OKAY, C</td></tr>
+            <tr><td><strong>Stânga – Mijloc</strong></td><td>YES, NOTHING, LED, THEY ARE</td></tr>
+            <tr><td><strong>Dreapta – Mijloc</strong></td><td>BLANK, READ, RED, YOU, YOUR, YOU'RE, THEIR</td></tr>
+            <tr><td><strong>Stânga – Jos</strong></td><td>[ECRAN GOL / NIMIC], REED, LEED, THEY'RE</td></tr>
+            <tr><td><strong>Dreapta – Jos</strong></td><td>DISPLAY, SAYS, NO, LEAD, HOLD ON, YOU ARE, THERE, SEE, CEE</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="search-bar">
+        <input id="wof-filter" type="search" placeholder="Filtrează eticheta din Pasul 2 (ex: READY, YOUR, UH HUH)..." aria-label="Filtrează lista de prioritate" />
+        <button type="button" id="wof-clear">Arată tot</button>
+      </div>
+      <div class="table-wrap">
+        <table id="wof-table">
+          <thead><tr><th>Eticheta citită</th><th>Ordinea de căutare (de la stânga la dreapta)</th></tr></thead>
+          <tbody id="wof-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 04 SECVENȚELE DE FIRE -->
+    <section class="module" id="mod-04">
+      <div class="mod-head">
+        <div>
+          <span class="mod-code display">04 Secvențele de fire</span>
+          <span class="mod-stage"> · Sinaia — Destinația 2</span>
+        </div>
+        <h2 class="display">Secvențele de Fire (Wire Sequences)</h2>
+      </div>
+      <p>Modulul are 4 panouri succesive. Aparițiile fiecărei culori (<strong>Roșu</strong>, <strong>Albastru</strong>, <strong>Negru</strong>) sunt <strong>cumulative</strong> pe tot parcursul modulului — bifează fiecare apariție pe măsură ce este citită, indiferent dacă firul a fost tăiat sau nu.</p>
+      <div class="search-bar" style="margin-top:0.25rem;">
+        <button type="button" class="reset-btn" id="seq-reset">Resetează toate bifele</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Apariție</th>
+              <th>Fire Roșii — Taie la:</th><th>Bifă</th>
+              <th>Fire Albastre — Taie la:</th><th>Bifă</th>
+              <th>Fire Negre — Taie la:</th><th>Bifă</th>
+            </tr>
+          </thead>
+          <tbody id="seq-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 05 LABIRINTELE -->
+    <section class="module" id="mod-05">
+      <div class="mod-head">
+        <div>
+          <span class="mod-code display">05 Labirintele</span>
+          <span class="mod-stage"> · Sinaia — Destinația 3</span>
+        </div>
+        <h2 class="display">Labirintele (Mazes)</h2>
+      </div>
+      <p>Identifică harta corectă după coordonatele celor două marcaje circulare verzi <strong style="color:var(--led-green);">◎ (Coloană 1–6, Rând 1–6, de sus-stânga)</strong> și ghidează lumina albă spre triunghiul roșu fără a atinge pereții groși.</p>
+      <div class="mazes-grid" id="mazes-grid"></div>
+    </section>
+
+    <!-- 06 BUTONUL ROTATIV -->
+    <section class="module" id="mod-06">
+      <div class="mod-head">
+        <div>
+          <span class="mod-code display">06 Butonul rotativ</span>
+          <span class="mod-stage"> · Sinaia — Destinația 4</span>
+        </div>
+        <h2 class="display">Butonul Rotativ (Knobs)</h2>
+      </div>
+      <p>Cele 12 LED-uri (2 rânduri × 6 coloane) determină direcția corectă (<span style="color:var(--led-red);">●</span> = aprins, ○ = stins). <strong>Atenție:</strong> pozițiile sunt întotdeauna raportate la eticheta <strong>„UP”</strong> de pe cadran (care poate fi rotită!).</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Poziție (raportată la „UP”)</th><th>Configurația A (6 stânga / 6 dreapta)</th><th>Configurația B (6 stânga / 6 dreapta)</th></tr></thead>
+          <tbody id="knobs-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 07 PAROLELE SECRETE -->
+    <section class="module" id="mod-07">
+      <div class="mod-head">
+        <div>
+          <span class="mod-code display">07 Parolele secrete</span>
+          <span class="mod-stage"> · Sinaia — Destinația 5 (Finală)</span>
+        </div>
+        <h2 class="display">Parolele Secrete (Passwords)</h2>
+      </div>
+      <p>O singură combinație din cele 5 coloane de litere poate forma unul dintre cele 35 de cuvinte valide. Sfat: filtrează rapid după literele disponibile în Coloana 1 și Coloana 2.</p>
+      <div class="search-bar">
+        <input id="pw-col1" type="search" maxlength="12" placeholder="Litere posibile Col. 1 (ex: hst)..." aria-label="Litere posibile coloana 1" />
+        <input id="pw-col2" type="search" maxlength="12" placeholder="Litere posibile Col. 2 (ex: oe)..." aria-label="Litere posibile coloana 2" />
+        <button type="button" id="pw-clear">Resetează</button>
+      </div>
+      <div class="pw-grid" id="pw-grid"></div>
+    </section>
+
+    <!-- ANEXĂ TEHNICĂ -->
+    <section class="module" id="anexa">
+      <div class="mod-head">
+        <div>
+          <span class="mod-code display">Anexă Tehnică</span>
+          <span class="mod-stage"> · Date Carcasă</span>
+        </div>
+        <h2 class="display">Elemente de Identificare ale Carcasei</h2>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Element tehnic</th><th>Cum se verifică și unde se folosește</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Numărul de serie</strong></td><td>Autocolantul cu cod alfanumeric de pe peretele stâng (ex. <span class="lcd">AB4K92</span>). Verifică dacă <strong>ultima cifră este pară</strong> (0, 2, 4, 6, 8) pentru regula <strong>S</strong> din Fire Complicate.</td></tr>
+            <tr><td><strong>Bateriile (AA / D)</strong></td><td>Numără toate bateriile vizibile sub capacul de sus (perechi subțiri AA + baterii mari D). Necesar pentru regula <strong>B</strong> (2 sau mai multe baterii).</td></tr>
+            <tr><td><strong>Portul Paralel (25P)</strong></td><td>Conector dreptunghiular lung, roz/violet, cu 25 de pini pe două rânduri (sub capacul din spate: <em>CASETĂ TEHNICĂ</em>). Necesar pentru regula <strong>P</strong>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      // 1. Highlight active nav tab on click
+      document.querySelectorAll('.nav-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          document.querySelectorAll('.nav-btn').forEach(function (b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+        });
+      });
+
+      // 2. Module 03: Who's on First priority lists (exact 28 keys)
+      var WOF_LISTS = [
+        ['READY', 'YES, OKAY, WHAT, MIDDLE, LEFT, PRESS, RIGHT, BLANK, READY, NO, FIRST, UHHH, NOTHING, WAIT'],
+        ['FIRST', 'LEFT, OKAY, YES, MIDDLE, NO, RIGHT, NOTHING, UHHH, WAIT, READY, BLANK, WHAT, PRESS, FIRST'],
+        ['NO', 'BLANK, UHHH, WAIT, FIRST, WHAT, READY, RIGHT, YES, NOTHING, LEFT, PRESS, OKAY, NO, MIDDLE'],
+        ['BLANK', 'WAIT, RIGHT, OKAY, MIDDLE, BLANK, PRESS, READY, NOTHING, NO, WHAT, LEFT, UHHH, YES, FIRST'],
+        ['NOTHING', 'UHHH, RIGHT, OKAY, MIDDLE, YES, BLANK, NO, PRESS, LEFT, WHAT, WAIT, FIRST, NOTHING, READY'],
+        ['YES', 'OKAY, RIGHT, UHHH, MIDDLE, FIRST, WHAT, PRESS, READY, NOTHING, YES, LEFT, BLANK, NO, WAIT'],
+        ['WHAT', 'UHHH, WHAT, LEFT, NOTHING, READY, BLANK, MIDDLE, NO, OKAY, FIRST, WAIT, YES, PRESS, RIGHT'],
+        ['UHHH', 'READY, NOTHING, LEFT, WHAT, OKAY, YES, RIGHT, NO, PRESS, BLANK, UHHH, MIDDLE, WAIT, FIRST'],
+        ['LEFT', 'RIGHT, LEFT, FIRST, NO, MIDDLE, YES, BLANK, WHAT, UHHH, WAIT, PRESS, READY, OKAY, NOTHING'],
+        ['RIGHT', 'YES, NOTHING, READY, PRESS, NO, WAIT, WHAT, RIGHT, MIDDLE, LEFT, UHHH, BLANK, OKAY, FIRST'],
+        ['MIDDLE', 'BLANK, READY, OKAY, WHAT, NOTHING, PRESS, NO, WAIT, LEFT, MIDDLE, RIGHT, FIRST, UHHH, YES'],
+        ['OKAY', 'MIDDLE, NO, FIRST, YES, UHHH, NOTHING, WAIT, OKAY, LEFT, READY, BLANK, PRESS, WHAT, RIGHT'],
+        ['WAIT', 'UHHH, NO, BLANK, OKAY, YES, LEFT, FIRST, PRESS, WHAT, WAIT, NOTHING, READY, RIGHT, MIDDLE'],
+        ['PRESS', 'RIGHT, MIDDLE, YES, READY, PRESS, OKAY, NOTHING, UHHH, BLANK, LEFT, FIRST, WHAT, NO, WAIT'],
+        ['YOU', "SURE, YOU ARE, YOUR, YOU'RE, NEXT, UH HUH, UR, HOLD, WHAT?, YOU, UH UH, LIKE, DONE, U"],
+        ['YOU ARE', "YOUR, NEXT, LIKE, UH HUH, WHAT?, DONE, UH UH, HOLD, YOU, U, YOU'RE, SURE, UR, YOU ARE"],
+        ['YOUR', "UH UH, YOU ARE, UH HUH, YOUR, NEXT, UR, SURE, U, YOU'RE, YOU, WHAT?, HOLD, LIKE, DONE"],
+        ["YOU'RE", "YOU, YOU'RE, UR, NEXT, UH UH, YOU ARE, U, YOUR, WHAT?, UH HUH, SURE, DONE, LIKE, HOLD"],
+        ['UR', "DONE, U, UR, UH HUH, WHAT?, SURE, YOUR, HOLD, YOU'RE, LIKE, NEXT, UH UH, YOU ARE, YOU"],
+        ['U', "UH HUH, SURE, NEXT, WHAT?, YOU'RE, UR, UH UH, DONE, U, YOU, LIKE, HOLD, YOU ARE, YOUR"],
+        ['UH HUH', "UH HUH, YOUR, YOU ARE, YOU, DONE, HOLD, UH UH, NEXT, SURE, LIKE, YOU'RE, UR, U, WHAT?"],
+        ['UH UH', "UR, U, YOU ARE, YOU'RE, NEXT, UH UH, DONE, YOU, UH HUH, LIKE, YOUR, SURE, HOLD, WHAT?"],
+        ['WHAT?', "YOU, HOLD, YOU'RE, YOUR, U, DONE, UH UH, LIKE, YOU ARE, UH HUH, UR, NEXT, WHAT?, SURE"],
+        ['DONE', "SURE, UH HUH, NEXT, WHAT?, YOUR, UR, YOU'RE, HOLD, LIKE, YOU, U, YOU ARE, UH UH, DONE"],
+        ['NEXT', "WHAT?, UH HUH, UH UH, YOUR, HOLD, SURE, NEXT, LIKE, DONE, YOU ARE, UR, YOU'RE, U, YOU"],
+        ['HOLD', "YOU ARE, U, DONE, UH UH, YOU, UR, SURE, WHAT?, YOU'RE, NEXT, HOLD, UH HUH, YOUR, LIKE"],
+        ['SURE', "YOU ARE, DONE, LIKE, YOU'RE, YOU, HOLD, UH HUH, UR, SURE, U, WHAT?, NEXT, YOUR, UH UH"],
+        ['LIKE', "YOU'RE, NEXT, U, UR, HOLD, DONE, UH UH, WHAT?, UH HUH, YOU, LIKE, SURE, YOU ARE, YOUR"]
+      ];
+
+      var wofBody = document.getElementById('wof-body');
+      WOF_LISTS.forEach(function (pair) {
+        var tr = document.createElement('tr');
+        tr.dataset.key = pair[0];
+        tr.innerHTML = '<td><strong>"' + pair[0] + '"</strong></td><td>' + pair[1] + '</td>';
+        wofBody.appendChild(tr);
+      });
+
+      var wofInput = document.getElementById('wof-filter');
+      var wofClear = document.getElementById('wof-clear');
+      function applyWofFilter() {
+        var q = (wofInput.value || '').trim().toUpperCase();
+        wofBody.querySelectorAll('tr').forEach(function (row) {
+          var key = row.dataset.key || '';
+          row.classList.toggle('hidden-row', q.length > 0 && key.indexOf(q) === -1);
+        });
+      }
+      wofInput.addEventListener('input', applyWofFilter);
+      wofClear.addEventListener('click', function () {
+        wofInput.value = '';
+        applyWofFilter();
+      });
+
+      // 3. Module 04: Wire Sequences table
+      var SEQ_ROWS = [
+        [1, 'C', 'B', 'A, B sau C'],
+        [2, 'B', 'A sau C', 'A sau C'],
+        [3, 'A', 'B', 'B'],
+        [4, 'A sau C', 'A', 'A sau C'],
+        [5, 'B', 'B', 'B'],
+        [6, 'A sau C', 'B sau C', 'B sau C'],
+        [7, 'A, B sau C', 'C', 'A sau B'],
+        [8, 'A sau B', 'A sau C', 'C'],
+        [9, 'B', 'A', 'C']
+      ];
+      var seqBody = document.getElementById('seq-body');
+      SEQ_ROWS.forEach(function (r) {
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td><strong>' + r[0] + '</strong></td>' +
+          '<td>' + r[1] + '</td><td><input class="seq-check" type="checkbox" aria-label="Roșu apariția ' + r[0] + '" /></td>' +
+          '<td>' + r[2] + '</td><td><input class="seq-check" type="checkbox" aria-label="Albastru apariția ' + r[0] + '" /></td>' +
+          '<td>' + r[3] + '</td><td><input class="seq-check" type="checkbox" aria-label="Negru apariția ' + r[0] + '" /></td>';
+        seqBody.appendChild(tr);
+      });
+      document.getElementById('seq-reset').addEventListener('click', function () {
+        seqBody.querySelectorAll('.seq-check').forEach(function (cb) { cb.checked = false; });
+      });
+
+      // 4. Module 05: All 9 Mazes rendered identically to mazes.ts
+      var MAZES = [
+        { id: 1, m: [[1,2],[6,3]], rw: [[3,1],[1,2],[3,2],[1,3],[3,3],[1,4],[4,4],[3,5],[5,5],[2,6]], bw: [[2,1],[5,1],[6,1],[3,2],[4,2],[5,2],[2,3],[4,3],[2,4],[3,4],[4,4],[2,5],[4,5],[5,5]] },
+        { id: 2, m: [[5,2],[2,4]], rw: [[2,2],[4,2],[1,3],[3,3],[5,3],[1,4],[2,4],[4,4],[1,5],[3,5],[1,6]], bw: [[2,1],[3,1],[5,1],[6,1],[2,2],[4,2],[5,2],[2,3],[5,3],[4,4],[5,5]] },
+        { id: 3, m: [[4,4],[6,4]], rw: [[3,1],[4,1],[1,2],[2,2],[4,2],[5,2],[2,3],[3,3],[5,3],[1,4],[2,4],[3,4],[4,4],[5,4],[1,5],[3,5],[4,5],[5,5],[4,6]], bw: [[2,1],[1,2],[4,2],[5,2],[2,5],[3,5]] },
+        { id: 4, m: [[1,1],[1,4]], rw: [[2,1],[1,2],[2,2],[1,3],[3,3],[5,3],[1,4],[1,5],[5,5],[3,6]], bw: [[3,1],[4,1],[5,1],[4,2],[5,2],[2,3],[3,3],[5,3],[2,4],[3,4],[4,4],[5,4],[2,5],[3,5]] },
+        { id: 5, m: [[5,3],[4,6]], rw: [[5,2],[2,3],[4,3],[1,4],[4,4],[5,4],[1,5],[5,5]], bw: [[1,1],[2,1],[3,1],[4,1],[5,1],[3,2],[4,2],[6,2],[3,3],[5,3],[2,4],[3,4],[4,4],[5,4],[2,5],[3,5],[4,5]] },
+        { id: 6, m: [[5,1],[3,5]], rw: [[1,1],[3,1],[1,2],[2,2],[3,2],[5,2],[2,3],[4,3],[2,4],[4,4],[1,5],[4,5],[4,6]], bw: [[4,1],[5,1],[5,2],[2,3],[3,3],[6,3],[1,4],[3,4],[5,5]] },
+        { id: 7, m: [[2,1],[2,6]], rw: [[4,1],[1,2],[3,2],[5,2],[2,3],[4,3],[2,4],[5,4],[1,5],[5,5]], bw: [[2,1],[3,1],[3,2],[4,2],[5,2],[1,3],[2,3],[4,3],[5,3],[4,4],[5,4],[2,5],[3,5],[4,5]] },
+        { id: 8, m: [[4,1],[3,4]], rw: [[1,1],[4,1],[3,2],[1,3],[5,3],[1,4],[3,4],[1,5],[2,5]], bw: [[3,1],[2,2],[3,2],[4,2],[5,2],[3,3],[4,3],[1,4],[3,4],[4,4],[5,4],[6,4],[3,5],[4,5],[5,5]] },
+        { id: 9, m: [[3,2],[1,5]], rw: [[1,1],[1,2],[2,2],[4,2],[3,3],[5,3],[1,4],[2,4],[4,4],[1,5],[2,5],[3,5],[5,5],[2,6],[4,6]], bw: [[3,1],[4,1],[4,2],[5,2],[2,3],[3,3],[5,3],[4,4],[5,4],[6,5]] }
+      ];
+      var mazesGrid = document.getElementById('mazes-grid');
+      MAZES.forEach(function (mz) {
+        var card = document.createElement('div');
+        card.className = 'maze-card';
+        var title = document.createElement('div');
+        title.className = 'maze-title display';
+        title.textContent = 'Harta ' + mz.id + ' · ◎ (' + mz.m[0][0] + ',' + mz.m[0][1] + ') & (' + mz.m[1][0] + ',' + mz.m[1][1] + ')';
+        card.appendChild(title);
+
+        var cell = 24;
+        var pad = 4;
+        var size = cell * 6 + pad * 2;
+        var svg = ['<svg viewBox="0 0 ' + size + ' ' + size + '" width="160" height="160" style="max-width:100%;height:auto;background:#0a0e0b;border:2px solid #e6e1d3;">'];
+        for (var r = 1; r <= 6; r++) {
+          for (var c = 1; c <= 6; c++) {
+            var cx = pad + (c - 0.5) * cell;
+            var cy = pad + (r - 0.5) * cell;
+            svg.push('<circle cx="' + cx + '" cy="' + cy + '" r="1.4" fill="#546056"/>');
+          }
+        }
+        mz.m.forEach(function (pt) {
+          var mx = pad + (pt[0] - 0.5) * cell;
+          var my = pad + (pt[1] - 0.5) * cell;
+          svg.push('<circle cx="' + mx + '" cy="' + my + '" r="7.2" fill="none" stroke="#3ddc84" stroke-width="1.8"/>');
+          svg.push('<circle cx="' + mx + '" cy="' + my + '" r="2.6" fill="none" stroke="#3ddc84" stroke-width="1.4"/>');
+        });
+        mz.rw.forEach(function (w) {
+          var x = pad + w[0] * cell;
+          var y1 = pad + (w[1] - 1) * cell;
+          svg.push('<line x1="' + x + '" y1="' + y1 + '" x2="' + x + '" y2="' + (y1 + cell) + '" stroke="#ffd9a0" stroke-width="2.8" stroke-linecap="square"/>');
+        });
+        mz.bw.forEach(function (w) {
+          var x1 = pad + (w[0] - 1) * cell;
+          var y = pad + w[1] * cell;
+          svg.push('<line x1="' + x1 + '" y1="' + y + '" x2="' + (x1 + cell) + '" y2="' + y + '" stroke="#ffd9a0" stroke-width="2.8" stroke-linecap="square"/>');
+        });
+        svg.push('</svg>');
+        var wrap = document.createElement('div');
+        wrap.innerHTML = svg.join('');
+        card.appendChild(wrap);
+        mazesGrid.appendChild(card);
+      });
+
+      // 5. Module 06: Knobs 12-LED configs (Config A & B)
+      var KNOB_ROWS = [
+        { label: 'SUS (UP)', a: [0,0,1,0,1,1, 1,1,1,1,0,1], b: [1,0,1,0,1,0, 0,1,1,0,1,1] },
+        { label: 'JOS (DOWN)', a: [0,1,1,0,0,1, 1,1,1,1,0,1], b: [1,0,1,0,1,0, 0,1,0,0,0,1] },
+        { label: 'STÂNGA (LEFT)', a: [0,0,0,0,1,0, 1,0,0,1,1,0], b: [0,0,0,0,1,0, 0,0,0,1,1,0] },
+        { label: 'DREAPTA (RIGHT)', a: [1,0,1,1,1,1, 1,1,1,0,1,0], b: [1,0,1,1,0,0, 1,1,1,0,1,0] }
+      ];
+      function renderLedsHtml(arr) {
+        var top = arr.slice(0, 6);
+        var bot = arr.slice(6, 12);
+        function row(slice) {
+          return '<div class="led-row">' + slice.map(function (v, idx) {
+            return (idx === 3 ? '<span class="led-sep"></span>' : '') + '<span class="led-dot' + (v ? ' on' : '') + '"></span>';
+          }).join('') + '</div>';
+        }
+        return row(top) + '<br />' + row(bot);
+      }
+      var knobsBody = document.getElementById('knobs-body');
+      KNOB_ROWS.forEach(function (kr) {
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td><strong>' + kr.label + '</strong></td><td>' + renderLedsHtml(kr.a) + '</td><td>' + renderLedsHtml(kr.b) + '</td>';
+        knobsBody.appendChild(tr);
+      });
+
+      // 6. Module 07: Passwords 35 words + Col 1/2 interactive filter
+      var PASSWORDS = [
+        'about', 'after', 'again', 'below', 'could',
+        'every', 'first', 'found', 'great', 'house',
+        'large', 'learn', 'never', 'other', 'place',
+        'plant', 'point', 'right', 'small', 'sound',
+        'spell', 'still', 'study', 'their', 'there',
+        'these', 'thing', 'think', 'three', 'water',
+        'where', 'which', 'world', 'would', 'write'
+      ];
+      var pwGrid = document.getElementById('pw-grid');
+      PASSWORDS.forEach(function (w) {
+        var div = document.createElement('div');
+        div.className = 'pw-word';
+        div.dataset.word = w;
+        div.textContent = w;
+        pwGrid.appendChild(div);
+      });
+      var c1 = document.getElementById('pw-col1');
+      var c2 = document.getElementById('pw-col2');
+      function filterPasswords() {
+        var s1 = (c1.value || '').toLowerCase().replace(/[^a-z]/g, '');
+        var s2 = (c2.value || '').toLowerCase().replace(/[^a-z]/g, '');
+        pwGrid.querySelectorAll('.pw-word').forEach(function (el) {
+          var w = el.dataset.word;
+          var ok1 = !s1 || s1.indexOf(w[0]) !== -1;
+          var ok2 = !s2 || s2.indexOf(w[1]) !== -1;
+          el.classList.toggle('dimmed', !(ok1 && ok2));
+        });
+      }
+      c1.addEventListener('input', filterPasswords);
+      c2.addEventListener('input', filterPasswords);
+      document.getElementById('pw-clear').addEventListener('click', function () {
+        c1.value = '';
+        c2.value = '';
+        filterPasswords();
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && window.parent !== window) {
+          window.parent.postMessage({ type: 'manual-close' }, window.location.origin);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

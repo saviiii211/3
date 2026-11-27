@@ -887,6 +887,109 @@ body {
   color: #bdb6a4 !important;
 }
 
+@keyframes intro-lamp-ignite {
+  0% { opacity: 0; }
+  12% { opacity: 0.72; }
+  20% { opacity: 0.08; }
+  36% { opacity: 0.85; }
+  48% { opacity: 0.14; }
+  66% { opacity: 0.96; }
+  74% { opacity: 0.35; }
+  100% { opacity: 1; }
+}
+
+@keyframes intro-lamp-flicker {
+  0%, 100% { opacity: 0.98; }
+  17% { opacity: 0.91; }
+  29% { opacity: 1; }
+  46% { opacity: 0.88; }
+  58% { opacity: 0.96; }
+  74% { opacity: 0.9; }
+  88% { opacity: 0.99; }
+}
+
+.intro-lamp-ignite {
+  animation: intro-lamp-ignite 1.35s steps(1, end) forwards;
+}
+
+.intro-lamp-steady {
+  animation: intro-lamp-flicker 4.2s ease-in-out infinite;
+}
+
+@keyframes intro-stamp-slam {
+  0% {
+    transform: rotate(-8deg) scale(1.65);
+    opacity: 0;
+  }
+  70% {
+    transform: rotate(-8deg) scale(0.96);
+    opacity: 0.9;
+  }
+  100% {
+    transform: rotate(-8deg) scale(1);
+    opacity: 0.85;
+  }
+}
+
+.intro-stamp-slam {
+  animation: intro-stamp-slam 180ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes intro-scene-shake {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  25% { transform: translate3d(-2px, 2px, 0); }
+  50% { transform: translate3d(2px, -1px, 0); }
+  75% { transform: translate3d(-1px, 1px, 0); }
+}
+
+.intro-scene-shake {
+  animation: intro-scene-shake 220ms ease-out;
+}
+
+@keyframes intro-dust-drift {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.55;
+  }
+  82% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: translate3d(12px, -38px, 0);
+    opacity: 0;
+  }
+}
+
+.intro-dust-mote {
+  animation: intro-dust-drift linear infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes intro-cta-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 1px rgba(230, 225, 211, 0.35), 0 0 14px rgba(255, 217, 160, 0.16), 2px 4px 12px rgba(0, 0, 0, 0.85);
+  }
+  50% {
+    box-shadow: 0 0 0 1px rgba(255, 217, 160, 0.78), 0 0 24px rgba(255, 217, 160, 0.36), 2px 4px 12px rgba(0, 0, 0, 0.85);
+  }
+}
+
+.intro-cta-pulse {
+  animation: intro-cta-glow 2.4s ease-in-out infinite;
+}
+
+@keyframes manual-modal-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.manual-modal-enter {
+  animation: manual-modal-fade 200ms ease-out forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-hw-shake,
   .animate-strike-flash,
@@ -906,7 +1009,14 @@ body {
   .det-crt-boot,
   .det-crt-shutdown,
   .det-cursor-blink,
-  .det-seal-ripping {
+  .det-seal-ripping,
+  .intro-lamp-ignite,
+  .intro-lamp-steady,
+  .intro-stamp-slam,
+  .intro-scene-shake,
+  .intro-dust-mote,
+  .intro-cta-pulse,
+  .manual-modal-enter {
     animation: none !important;
   }
   .bomb-3d-assembly {

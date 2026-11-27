@@ -7,6 +7,7 @@ import { FinaleSequence } from './components/finale/FinaleSequence';
 import { GpsRadarView } from './components/GpsRadarView';
 import { IntroRoomCutscene } from './components/intro/IntroRoomCutscene';
 import { IntroTerminal } from './components/intro/IntroTerminal';
+import { ManualModal } from './components/ManualModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { PWAInstallButton } from './components/PWAInstallButton';
 import { RadioHandset } from './components/RadioHandset';
@@ -85,6 +86,7 @@ export default function App() {
     null
   );
   const [adminOpen, setAdminOpen] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
   const [bombRot, setBombRot] = useState<{ rx: number; ry: number }>({ rx: 9, ry: -7 });
   const [finaleOpen, setFinaleOpen] = useState(false);
   const [finaleStartAtVideo, setFinaleStartAtVideo] = useState(false);
@@ -496,9 +498,15 @@ export default function App() {
         />
       )}
 
-      {/* Phase 2: Abandoned Room Entry Cutscene (over live mounted game scene) */}
+      {/* Phase 2: Noir Lamp-Lit Desk Cutscene (over live mounted game scene) */}
       {appPhase === 'cutscene' && (
-        <IntroRoomCutscene onComplete={() => setAppPhase('game')} />
+        <IntroRoomCutscene
+          onComplete={() => setAppPhase('game')}
+          onOpenManual={() => {
+            soundEngine.playClick();
+            setManualOpen(true);
+          }}
+        />
       )}
 
       {/* Main Game Scene (mounted from cutscene onwards for seamless fade-in) */}
@@ -525,20 +533,20 @@ export default function App() {
       )}
 
       {/* Narrow Noir Top Hardware Strip (#0c0d0e) */}
-      <header className="sticky top-0 z-30 min-h-[56px] bg-[#0c0d0e]/95 border-b-2 border-black shadow-[0_6px_18px_rgba(0,0,0,0.88)] px-2 sm:px-4 py-1 flex items-center justify-between gap-2">
+      <header className="sticky top-0 z-30 min-h-[56px] bg-[#0c0d0e]/95 border-b-2 border-black shadow-[0_6px_18px_rgba(0,0,0,0.88)] px-1 sm:px-4 py-1 flex items-center justify-between gap-1 sm:gap-2">
         {/* Left: Image 2 Ivory Timer Plate (3 strike lamp holes, speaker hole, SVG red 7-seg MM:SS, 5-tap admin trigger) */}
         <button
           type="button"
           onClick={handleTelemetryTap}
           aria-label="Cronometru principal telemetrie"
-          className="det-ivory-plate relative px-2.5 sm:px-3 py-1 flex items-center gap-2 sm:gap-2.5 shrink-0 cursor-pointer select-none min-h-[44px]"
+          className="det-ivory-plate relative px-1.5 sm:px-3 py-1 flex items-center gap-1 sm:gap-2.5 shrink-0 cursor-pointer select-none min-h-[44px]"
         >
           {/* Red 7-Segment LED Module Window */}
-          <div className="bg-[#120807] border border-[#3a382f] px-2 py-0.5 flex items-center gap-1.5 shadow-inner">
+          <div className="bg-[#120807] border border-[#3a382f] px-1 sm:px-2 py-0.5 flex items-center gap-1 shadow-inner">
             <SevenSegmentDisplay
               value={formatNixieTimer(elapsedSeconds)}
               color="#ff3b2a"
-              height={22}
+              height={19}
               blinkColon={!state.victory && appPhase === 'game'}
               colonVisible={elapsedSeconds % 2 === 0}
             />
@@ -550,18 +558,18 @@ export default function App() {
             aria-label={`Greșeli totale: ${state.strikes}`}
             className="flex flex-col items-center gap-0.5"
           >
-            <div className="flex items-center gap-1" aria-hidden="true">
+            <div className="flex items-center gap-0.5 sm:gap-1" aria-hidden="true">
               {[1, 2, 3].map((n) => (
                 <span
                   key={n}
-                  className={`w-2.5 h-2.5 rounded-full border border-[#3a382f] ${
+                  className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full border border-[#3a382f] ${
                     state.strikes >= n ? 'bg-[#ff3b2a] shadow-[0_0_6px_#ff3b2a]' : 'bg-[#2a2c29]'
                   }`}
                 />
               ))}
             </div>
             <div className="flex items-center gap-1">
-              <span className="font-tech text-[10px] font-bold leading-none text-[#c0281c]">
+              <span className="font-tech text-[9px] sm:text-[10px] font-bold leading-none text-[#c0281c]">
                 ERR {state.strikes}
               </span>
               <span className="hidden sm:inline font-tech text-[9px] text-[#3a382f]">
@@ -578,14 +586,15 @@ export default function App() {
         </button>
 
         {/* Center: DISPOZITIV / GPS as Dymo-labeled pushbuttons */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1 sm:gap-1.5">
           <button
             type="button"
             onClick={() => {
               soundEngine.playClick();
               setActiveView('console');
             }}
-            className={`det-arcade-btn min-h-[44px] px-2 sm:px-2.5 py-1 flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+            aria-label="Vizualizare dispozitiv"
+            className={`det-arcade-btn min-h-[44px] px-1.5 sm:px-2.5 py-1 flex items-center gap-1 sm:gap-1.5 whitespace-nowrap cursor-pointer ${
               activeView === 'console' ? 'ring-2 ring-[#ffd9a0]' : 'opacity-80'
             }`}
           >
@@ -601,7 +610,8 @@ export default function App() {
               soundEngine.playClick();
               setActiveView('gps');
             }}
-            className={`det-arcade-btn min-h-[44px] px-2 sm:px-2.5 py-1 flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+            aria-label="Vizualizare GPS"
+            className={`det-arcade-btn min-h-[44px] px-1.5 sm:px-2.5 py-1 flex items-center gap-1 sm:gap-1.5 whitespace-nowrap cursor-pointer ${
               activeView === 'gps' ? 'ring-2 ring-[#3ddc84]' : 'opacity-80'
             }`}
           >
@@ -612,14 +622,33 @@ export default function App() {
               }`}
             />
             <Compass className="w-3.5 h-3.5 text-[#eceae2]" aria-hidden="true" />
-            <span className="det-dymo-label px-1.5 py-0.5 text-[10px] font-bold">
+            <span className="det-dymo-label px-1 sm:px-1.5 py-0.5 text-[9px] sm:text-[10px] font-bold">
               GPS
             </span>
           </button>
         </div>
 
-        {/* Right: PWA Install + Discreet Audio Switch */}
-        <div className="flex items-center gap-1.5 shrink-0">
+        {/* Right: Manual + PWA Install + Discreet Audio Switch */}
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+          <button
+            type="button"
+            data-testid="header-manual-btn"
+            onClick={() => {
+              soundEngine.playClick();
+              setManualOpen(true);
+            }}
+            aria-label="Deschide manualul de dezamorsare"
+            className={`det-arcade-btn min-h-[44px] px-1 sm:px-2.5 py-1 flex items-center gap-1 sm:gap-1.5 whitespace-nowrap cursor-pointer ${
+              manualOpen ? 'ring-2 ring-[#ffd9a0]' : ''
+            }`}
+          >
+            <span aria-hidden="true" className="text-xs leading-none">
+              📖
+            </span>
+            <span className="det-dymo-label px-1 sm:px-1.5 py-0.5 text-[9px] sm:text-[10px] font-bold">
+              Manual
+            </span>
+          </button>
           <PWAInstallButton />
           <button
             type="button"
@@ -776,6 +805,9 @@ export default function App() {
       )}
         </RoomBackdrop>
       )}
+
+      {/* Full-screen Offline Manual Overlay (renders over cutscene or live game without losing state) */}
+      <ManualModal open={manualOpen} onClose={() => setManualOpen(false)} />
     </div>
   );
 }

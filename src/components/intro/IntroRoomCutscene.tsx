@@ -1,552 +1,650 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { motion } from 'motion/react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion';
 import { ambienceAudio } from '../../utils/ambience';
-import { DetectiveSilhouette, type DetectivePose } from '../room/DetectiveSilhouette';
+import { soundEngine } from '../../utils/sound';
+
+// ============================================================================
+// CONSTANTE DE TIMING (în milisecunde) — ușor de ajustat pentru fiecare pas
+// ============================================================================
+const TIMING = {
+  /** 0.0–0.8 s: ecran negru + text VT323 „SINAIA · 03:03” în stânga-jos */
+  BLACK_OPEN_MS: 800,
+  /** 0.8–2.2 s: lampa clipește de 2–3 ori și se aprinde progresiv */
+  LAMP_FLICKER_START_MS: 800,
+  LAMP_STEADY_MS: 2200,
+  /** 2.2–3.2 s: valiza urcă 7 px cu fade-in, dosarul glisează 20 px din dreapta */
+  OBJECTS_REVEAL_MS: 2200,
+  FOLDER_SLIDE_MS: 2520,
+  /** 3.2–4.2 s: ștampila „STRICT SECRET” lovește dosarul (180 ms) + shake 2 px */
+  STAMP_IMPACT_MS: 3200,
+  SHAKE_DURATION_MS: 230,
+  /** 4.2–6.2 s: panoul cu povestea în Courier Prime (efect typewriter) */
+  STORY_START_MS: 4200,
+  STORY_TYPE_INTERVAL_MS: 16,
+  /** 6.2–7.5 s: LED chihlimbar aprins, LCD „03:03”, LED roșu pulsează încet */
+  BRIEFCASE_ARM_MS: 6200,
+  /** 7.5 s+: buton central „ÎNCEPE MISIUNEA” + „Citește manualul” */
+  BUTTONS_REVEAL_MS: 7500,
+  /** Durata fade-out spre negru la pornirea jocului */
+  FADE_OUT_MS: 700,
+} as const;
+
+const STORY_LINES = [
+  'Cineva a lăsat o valiză pe masa din biroul vechi.',
+  'Ceasul numără înapoi. Ai nevoie de ajutor ca să o dezamorsezi.',
+  'Manualul e singura ta șansă.',
+];
+
+const STORY_FULL_TEXT = STORY_LINES.join('\n');
+
+interface DustMote {
+  id: number;
+  leftPct: number;
+  topPct: number;
+  sizePx: number;
+  durationSec: number;
+  delaySec: number;
+  opacity: number;
+}
+
+const DUST_MOTES: DustMote[] = [
+  { id: 1, leftPct: 36, topPct: 26, sizePx: 2, durationSec: 13, delaySec: -2, opacity: 0.42 },
+  { id: 2, leftPct: 44, topPct: 38, sizePx: 3, durationSec: 17, delaySec: -6, opacity: 0.35 },
+  { id: 3, leftPct: 52, topPct: 24, sizePx: 2, durationSec: 15, delaySec: -4, opacity: 0.45 },
+  { id: 4, leftPct: 60, topPct: 34, sizePx: 2.5, durationSec: 19, delaySec: -9, opacity: 0.32 },
+  { id: 5, leftPct: 39, topPct: 48, sizePx: 2, durationSec: 14, delaySec: -11, opacity: 0.38 },
+  { id: 6, leftPct: 49, topPct: 42, sizePx: 3, durationSec: 18, delaySec: -3, opacity: 0.44 },
+  { id: 7, leftPct: 56, topPct: 50, sizePx: 2, durationSec: 16, delaySec: -7, opacity: 0.34 },
+  { id: 8, leftPct: 64, topPct: 44, sizePx: 2, durationSec: 20, delaySec: -12, opacity: 0.3 },
+  { id: 9, leftPct: 42, topPct: 56, sizePx: 2.5, durationSec: 15, delaySec: -5, opacity: 0.4 },
+  { id: 10, leftPct: 54, topPct: 58, sizePx: 2, durationSec: 12.5, delaySec: -8, opacity: 0.46 },
+  { id: 11, leftPct: 47, topPct: 30, sizePx: 2, durationSec: 16.5, delaySec: -1, opacity: 0.36 },
+  { id: 12, leftPct: 58, topPct: 28, sizePx: 2.5, durationSec: 14.5, delaySec: -10, opacity: 0.38 },
+  { id: 13, leftPct: 34, topPct: 42, sizePx: 2, durationSec: 18.5, delaySec: -14, opacity: 0.28 },
+  { id: 14, leftPct: 67, topPct: 54, sizePx: 2, durationSec: 17.5, delaySec: -6, opacity: 0.28 },
+  { id: 15, leftPct: 51, topPct: 49, sizePx: 2, durationSec: 13.5, delaySec: -9, opacity: 0.42 },
+  { id: 16, leftPct: 45, topPct: 63, sizePx: 2, durationSec: 19.5, delaySec: -4, opacity: 0.32 },
+];
+
+function hasUserGesture(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const ua = (navigator as unknown as { userActivation?: { hasBeenActive?: boolean } })
+    .userActivation;
+  return Boolean(ua?.hasBeenActive);
+}
 
 interface IntroRoomCutsceneProps {
   onComplete: () => void;
+  onOpenManual?: () => void;
 }
 
 export const IntroRoomCutscene: React.FC<IntroRoomCutsceneProps> = ({
   onComplete,
+  onOpenManual,
 }) => {
   const reducedMotion = usePrefersReducedMotion();
 
-  const [doorOpen, setDoorOpen] = useState(false);
-  const [detectiveVisible, setDetectiveVisible] = useState(false);
-  const [detectiveX, setDetectiveX] = useState(145);
-  const [walkDur, setWalkDur] = useState(2.2);
-  const [pose, setPose] = useState<DetectivePose>('stand');
-  const [bulbOn, setBulbOn] = useState(false);
-  const [bulbFlicker, setBulbFlicker] = useState(false);
-  const [chairX, setChairX] = useState(965);
-  const [radioActive, setRadioActive] = useState(false);
-  const [zoomToTable, setZoomToTable] = useState(false);
-  const [fadingOut, setFadingOut] = useState(false);
-  const [showSkip, setShowSkip] = useState(false);
-  const [viewport, setViewport] = useState<{ w: number; h: number }>(() =>
-    typeof window !== 'undefined'
-      ? { w: window.innerWidth, h: window.innerHeight }
-      : { w: 1280, h: 720 }
+  const [stampIntroVisible, setStampIntroVisible] = useState<boolean>(() => !reducedMotion);
+  const [lampPhase, setLampPhase] = useState<'off' | 'flicker' | 'on'>(() =>
+    reducedMotion ? 'on' : 'off'
   );
+  const [objectsVisible, setObjectsVisible] = useState<boolean>(() => reducedMotion);
+  const [folderVisible, setFolderVisible] = useState<boolean>(() => reducedMotion);
+  const [stamped, setStamped] = useState<boolean>(() => reducedMotion);
+  const [impactShake, setImpactShake] = useState<boolean>(false);
+  const [storyVisible, setStoryVisible] = useState<boolean>(() => reducedMotion);
+  const [storyChars, setStoryChars] = useState<number>(() =>
+    reducedMotion ? STORY_FULL_TEXT.length : 0
+  );
+  const [briefcaseArmed, setBriefcaseArmed] = useState<boolean>(() => reducedMotion);
+  const [buttonsVisible, setButtonsVisible] = useState<boolean>(() => reducedMotion);
+  const [fadingOut, setFadingOut] = useState<boolean>(false);
 
-  const completedRef = useRef(false);
+  const timersRef = useRef<number[]>([]);
+  const typeIntervalRef = useRef<number | null>(null);
+  const completedRef = useRef<boolean>(false);
 
-  useEffect(() => {
-    const onResize = () =>
-      setViewport({ w: window.innerWidth, h: window.innerHeight });
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+  const clearSequenceTimers = useCallback(() => {
+    for (const id of timersRef.current) {
+      window.clearTimeout(id);
+    }
+    timersRef.current = [];
+    if (typeIntervalRef.current !== null) {
+      window.clearInterval(typeIntervalRef.current);
+      typeIntervalRef.current = null;
+    }
   }, []);
 
-  const finishOnce = () => {
+  const triggerFinish = useCallback(() => {
     if (completedRef.current) return;
     completedRef.current = true;
-    onComplete();
-  };
+    clearSequenceTimers();
+    if (hasUserGesture()) {
+      soundEngine.playClick();
+    }
+    if (reducedMotion) {
+      onComplete();
+      return;
+    }
+    setFadingOut(true);
+    window.setTimeout(() => {
+      onComplete();
+    }, TIMING.FADE_OUT_MS);
+  }, [clearSequenceTimers, onComplete, reducedMotion]);
 
-  // Reduced motion: short calm fade directly into live game
+  const jumpToFinalState = useCallback(() => {
+    clearSequenceTimers();
+    if (hasUserGesture()) {
+      soundEngine.playClick();
+    }
+    setStampIntroVisible(false);
+    setLampPhase('on');
+    setObjectsVisible(true);
+    setFolderVisible(true);
+    setStamped(true);
+    setImpactShake(false);
+    setStoryVisible(true);
+    setStoryChars(STORY_FULL_TEXT.length);
+    setBriefcaseArmed(true);
+    setButtonsVisible(true);
+  }, [clearSequenceTimers]);
+
+  // If reduced motion becomes active, show final static state with buttons immediately
   useEffect(() => {
     if (!reducedMotion) return;
-    setBulbOn(true);
-    setFadingOut(true);
-    const tid = window.setTimeout(finishOnce, 320);
-    return () => window.clearTimeout(tid);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reducedMotion]);
+    jumpToFinalState();
+  }, [reducedMotion, jumpToFinalState]);
 
-  // 14-second noir entry & seating choreography
+  // Choreographed ~8 second noir desk reveal sequence
   useEffect(() => {
     if (reducedMotion) return;
 
-    const timers: number[] = [];
-    const at = (ms: number, fn: () => void) => {
-      timers.push(window.setTimeout(fn, ms));
+    const schedule = (ms: number, fn: () => void) => {
+      timersRef.current.push(window.setTimeout(fn, ms));
     };
 
-    // Show skip button subtly after 1.5s
-    at(1500, () => setShowSkip(true));
-
-    // 0.8s: door creaks & opens, cold doorway beam falls across floor
-    at(800, () => {
-      ambienceAudio.playDoorCreak();
-      setDoorOpen(true);
+    // 0.8s: Old lamp flickers 2-3 times and turns on
+    schedule(TIMING.LAMP_FLICKER_START_MS, () => {
+      setStampIntroVisible(false);
+      setLampPhase('flicker');
+      if (hasUserGesture()) {
+        ambienceAudio.playBulbPowerOn();
+      }
     });
 
-    // 1.8s: backlit silhouette appears at threshold
-    at(1800, () => {
-      setDetectiveVisible(true);
-      setPose('stand');
+    schedule(TIMING.LAMP_STEADY_MS, () => {
+      setLampPhase('on');
     });
 
-    // 2.6-5.0s: enters room (6 steps synced with muffled footsteps)
-    at(2600, () => {
-      setWalkDur(2.25);
-      setPose('walk');
-      setDetectiveX(630);
+    // 2.2–3.2s: Briefcase rises 7px + walkie-talkie appears; folder slides 20px from right
+    schedule(TIMING.OBJECTS_REVEAL_MS, () => {
+      setObjectsVisible(true);
     });
-    [2650, 3040, 3430, 3820, 4210, 4600].forEach((ms) => {
-      at(ms, () => ambienceAudio.playFootstep());
+    schedule(TIMING.FOLDER_SLIDE_MS, () => {
+      setFolderVisible(true);
     });
 
-    // 5.0-7.0s: stops center, looks left, pauses, looks right, tips hat
-    at(5000, () => setPose('lookLeft'));
-    at(5750, () => setPose('lookRight'));
-    at(6500, () => setPose('tipHat'));
-
-    // 7.0-7.8s: door closes with muffled thud, overhead lamp clicks on with 2 flickers
-    at(7000, () => {
-      setDoorOpen(false);
-      ambienceAudio.playDoorCloseThud();
-    });
-    at(7250, () => {
-      ambienceAudio.playBulbPowerOn();
-      setBulbOn(true);
-      setBulbFlicker(true);
-    });
-    at(7380, () => setBulbFlicker(false));
-    at(7520, () => setBulbFlicker(true));
-    at(7640, () => setBulbFlicker(false));
-
-    // 7.8-10.5s: walks toward table chair, pulls chair, sits down
-    at(7850, () => {
-      setWalkDur(1.3);
-      setPose('walk');
-      setDetectiveX(935);
-    });
-    [7950, 8350, 8750].forEach((ms) => {
-      at(ms, () => ambienceAudio.playFootstep());
-    });
-    at(9150, () => {
-      ambienceAudio.playChairScrape();
-      setChairX(985);
-    });
-    at(9550, () => {
-      setWalkDur(0.4);
-      setPose('sit');
-      setChairX(995);
+    // 3.2–4.2s: "STRICT SECRET" stamp hits folder + 2px scene shake
+    schedule(TIMING.STAMP_IMPACT_MS, () => {
+      setStamped(true);
+      setImpactShake(true);
+      if (hasUserGesture()) {
+        ambienceAudio.playDoorCloseThud();
+      }
+      schedule(TIMING.SHAKE_DURATION_MS, () => {
+        setImpactShake(false);
+      });
     });
 
-    // 10.5-11.5s: walkie-talkie on table crackles & lights up "CH 03 · SEMNAL SLAB"
-    at(10500, () => {
-      ambienceAudio.playRadioCrackle();
-      setRadioActive(true);
+    // 4.2–6.2s: Courier Prime story typewriter panel
+    schedule(TIMING.STORY_START_MS, () => {
+      setStoryVisible(true);
+      let count = 0;
+      typeIntervalRef.current = window.setInterval(() => {
+        count += 1;
+        setStoryChars(count);
+        if (count >= STORY_FULL_TEXT.length && typeIntervalRef.current !== null) {
+          window.clearInterval(typeIntervalRef.current);
+          typeIntervalRef.current = null;
+        }
+      }, TIMING.STORY_TYPE_INTERVAL_MS);
     });
 
-    // 11.5-13.5s: camera zooms toward table, silhouette exits frame, cross-fade to live game
-    at(11500, () => {
-      setZoomToTable(true);
+    // 6.2–7.5s: Amber LED on, LCD switches "--:--" -> "03:03", red LED begins slow pulse
+    schedule(TIMING.BRIEFCASE_ARM_MS, () => {
+      setBriefcaseArmed(true);
+      if (hasUserGesture()) {
+        soundEngine.playClick();
+      }
     });
-    at(12900, () => {
-      setFadingOut(true);
+
+    // 7.5s+: Central Dymo CTA + secondary "Citește manualul" button
+    schedule(TIMING.BUTTONS_REVEAL_MS, () => {
+      setButtonsVisible(true);
     });
-    at(13650, finishOnce);
 
     return () => {
-      timers.forEach((id) => window.clearTimeout(id));
+      clearSequenceTimers();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reducedMotion]);
+  }, [reducedMotion, clearSequenceTimers]);
 
-  // Camera scale & horizontal pan so portrait phones follow detective smoothly (Door -> Center -> Table)
-  const coverScale = Math.max(viewport.w / 1600, viewport.h / 900);
-  const isPortrait = viewport.w < viewport.h * 0.95;
+  const handleSkipClick = () => {
+    if (buttonsVisible) {
+      triggerFinish();
+    } else {
+      jumpToFinalState();
+    }
+  };
 
-  // Center of attention shifts horizontally along the 1600px scene
-  const focusX = zoomToTable
-    ? 1110
-    : detectiveVisible
-      ? Math.max(360, Math.min(1080, detectiveX + 120))
-      : 320;
-  const panOffsetX = isPortrait
-    ? Math.max(
-        viewport.w - 1600 * coverScale,
-        Math.min(0, viewport.w / 2 - focusX * coverScale)
-      )
-    : (viewport.w - 1600 * coverScale) / 2;
+  const typedLines = useMemo(() => {
+    const visibleText = STORY_FULL_TEXT.slice(0, storyChars);
+    return visibleText.split('\n');
+  }, [storyChars]);
+
+  const lampLit = lampPhase !== 'off';
 
   return (
-    <motion.div
+    <div
       data-testid="intro-room-cutscene"
-      initial={{ opacity: 1 }}
-      animate={{ opacity: fadingOut ? 0 : 1 }}
-      transition={{ duration: 0.7, ease: 'easeInOut' }}
-      className="fixed inset-0 z-[1050] bg-[#050606] overflow-hidden select-none"
+      className={`fixed inset-0 z-[1050] bg-[#050606] text-[#e6e1d3] overflow-hidden select-none transition-opacity ease-in-out ${
+        fadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'
+      }`}
+      style={{ transitionDuration: `${TIMING.FADE_OUT_MS}ms` }}
     >
-      {/* Cross-Section Virtual 1600x900 Room Camera Stage */}
-      <motion.div
-        className="absolute bottom-0 left-0 origin-bottom-left"
-        style={{
-          width: '1600px',
-          height: '900px',
-        }}
-        animate={{
-          x: zoomToTable ? panOffsetX - 210 * coverScale : panOffsetX,
-          y: zoomToTable ? 110 * coverScale : 0,
-          scale: zoomToTable ? coverScale * 1.58 : coverScale,
-        }}
-        transition={{
-          duration: zoomToTable ? 1.8 : 1.1,
-          ease: [0.22, 1, 0.36, 1],
-        }}
+      {/* Shakeable scene container (2px jolt on stamp impact) */}
+      <div
+        className={`relative w-full h-full flex flex-col justify-between ${
+          impactShake && !reducedMotion ? 'intro-scene-shake' : ''
+        }`}
       >
-        {/* ================= BACK WALL + WAINSCOT + DAMPNESS + NEON SPILL ================= */}
+        {/* ================= 1. PERETELE & LUMINĂ RECE DE FEREASTRĂ ================= */}
         <div
           aria-hidden="true"
-          className="absolute inset-x-0 top-0 h-[620px] overflow-hidden"
+          className="pointer-events-none absolute inset-0 transition-opacity duration-700"
           style={{
-            background: 'linear-gradient(180deg, #2a3440 0%, #151b23 48%, #0a0e13 100%)',
+            opacity: lampLit ? 1 : 0.08,
+            background:
+              'linear-gradient(180deg, #050606 0%, #141a17 48%, #0d120f 72%, #050606 100%)',
           }}
         >
-          {/* Lower wainscot band (#10151c + #4b5766 trim) */}
-          <div className="absolute inset-x-0 bottom-0 h-[235px] bg-[#10151c] border-t border-[#4b5766]/35" />
-
-          {/* Subtle right neon spill */}
+          {/* Textură subtilă de tapet (linii verticale fine, 3–4% opacitate) */}
           <div
-            className="absolute inset-0 pointer-events-none"
+            className="absolute inset-0"
             style={{
-              background:
-                'radial-gradient(ellipse 46% 62% at 100% 34%, rgba(217, 70, 239, 0.24) 0%, rgba(139, 92, 246, 0.1) 45%, transparent 76%)',
-              mixBlendMode: 'screen',
+              backgroundImage:
+                'repeating-linear-gradient(90deg, rgba(230, 225, 211, 0.035) 0px, rgba(230, 225, 211, 0.035) 1px, transparent 1px, transparent 22px)',
             }}
           />
 
-          {/* Damp stain */}
+          {/* Rază diagonală slabă de lumină rece ca de la o fereastră */}
+          <div
+            className="absolute -top-12 right-[6%] w-[clamp(160px,34vw,380px)] h-[75vh]"
+            style={{
+              background:
+                'linear-gradient(155deg, rgba(127, 155, 184, 0.08) 0%, rgba(127, 155, 184, 0.035) 48%, transparent 82%)',
+              clipPath: 'polygon(30% 0%, 100% 0%, 64% 100%, 0% 100%)',
+            }}
+          />
+        </div>
+
+        {/* ================= 2. PARTICULE DE PRAF ÎN CONUL DE LUMINĂ ================= */}
+        {lampLit && !reducedMotion && (
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
+            {DUST_MOTES.map((mote) => (
+              <span
+                key={mote.id}
+                className="intro-dust-mote absolute rounded-full bg-[#ffd9a0]"
+                style={{
+                  left: `${mote.leftPct}%`,
+                  top: `${mote.topPct}%`,
+                  width: `${mote.sizePx}px`,
+                  height: `${mote.sizePx}px`,
+                  opacity: mote.opacity,
+                  animationDuration: `${mote.durationSec}s`,
+                  animationDelay: `${mote.delaySec}s`,
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* ================= 3. ZONA PRINCIPALĂ: LAMPA + MASA + CELE 3 OBIECTE ================= */}
+        {/* Flex-1 stage sits strictly ABOVE the bottom story+CTA dock so objects are never covered */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none relative z-10 flex-1 min-h-0 flex flex-col justify-between items-center overflow-hidden"
+        >
+          {/* LAMPA DE SUS & CONUL DE LUMINĂ CALDĂ */}
+          <div
+            className={`relative w-full flex-1 min-h-0 flex flex-col items-center ${
+              lampPhase === 'off'
+                ? 'opacity-0'
+                : lampPhase === 'flicker' && !reducedMotion
+                  ? 'intro-lamp-ignite'
+                  : lampPhase === 'on' && !reducedMotion
+                    ? 'intro-lamp-steady'
+                    : 'opacity-100'
+            }`}
+          >
+            {/* Fir subțire */}
+            <div className="w-[2px] h-[clamp(10px,3.2dvh,42px)] [@media(max-height:460px)]:h-1.5 bg-[#0c0d0d] shrink-0" />
+
+            {/* Abajur conic (verde-închis + alamă) desenat curat în SVG */}
+            <svg
+              viewBox="0 0 140 54"
+              className="w-[clamp(76px,17vw,142px)] [@media(max-height:460px)]:w-[72px] h-auto -mt-0.5 shrink-0 drop-shadow-[0_6px_14px_rgba(0,0,0,0.85)]"
+            >
+              <rect x="63" y="0" width="14" height="10" rx="1" fill="#8b6f3d" stroke="#15171a" strokeWidth="1" />
+              <path
+                d="M 55 9 L 85 9 L 126 42 L 14 42 Z"
+                fill="#17271e"
+                stroke="#0a0f0c"
+                strokeWidth="1.5"
+              />
+              <path d="M 14 42 L 126 42" stroke="#9d8049" strokeWidth="1.5" />
+              <ellipse
+                cx="70"
+                cy="42"
+                rx="53"
+                ry="7"
+                fill={lampLit ? '#ffd9a0' : '#242725'}
+                fillOpacity={lampLit ? '0.88' : '0.4'}
+              />
+              <circle
+                cx="70"
+                cy="44"
+                r="7.5"
+                fill={lampLit ? '#fff1d4' : '#2a2d2b'}
+              />
+            </svg>
+
+            {/* Conul de lumină caldă (#ffd9a0 -> transparent) peste masă */}
+            <div
+              className="w-[min(115vw,840px)] flex-1 min-h-[28px] max-h-[clamp(140px,38dvh,400px)] -mt-2"
+              style={{
+                clipPath: 'polygon(43% 0%, 57% 0%, 100% 100%, 0% 100%)',
+                background:
+                  'radial-gradient(ellipse 68% 78% at 50% 16%, rgba(255, 217, 160, 0.34) 0%, rgba(232, 182, 111, 0.14) 52%, transparent 88%)',
+                mixBlendMode: 'screen',
+              }}
+            />
+          </div>
+
+          {/* BLATUL MESEI & CELE TREI OBIECTE (în partea de jos a zonei superioare, complet vizibile) */}
+          <div
+            className={`relative w-full h-[clamp(74px,14dvh,126px)] [@media(max-height:460px)]:h-[70px] shrink-0 transition-opacity duration-700 ${
+              lampLit ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
+            {/* Suprafața blatului de lemn luminat cald de lampă */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  'linear-gradient(180deg, #2d2217 0%, #1c150e 58%, #0a0806 100%)',
+                borderTop: '1px solid rgba(255, 217, 160, 0.28)',
+                boxShadow: 'inset 0 10px 26px rgba(255, 217, 160, 0.08)',
+              }}
+            >
+              <div
+                className="absolute inset-0"
+                style={{
+                  background:
+                    'radial-gradient(ellipse 50% 85% at 48% 10%, rgba(255, 217, 160, 0.18) 0%, rgba(232, 182, 111, 0.06) 46%, transparent 78%)',
+                }}
+              />
+            </div>
+
+            {/* Cele 3 obiecte pe blat (centrate și scalate responsive) */}
+            <div className="relative mx-auto w-[min(94vw,680px)] h-full flex items-end justify-center pb-[clamp(8px,2dvh,22px)] [@media(max-height:460px)]:pb-1.5">
+              {/* -------- Obiect 1: VALIZA-BOMBĂ (centru, ușor spre stânga) -------- */}
+              <div className="relative -translate-x-[clamp(6px,3vw,28px)]">
+                <div
+                  className="transition-all duration-700 ease-out"
+                  style={{
+                    opacity: objectsVisible ? 1 : 0,
+                    transform: objectsVisible ? 'translateY(0)' : 'translateY(7px)',
+                  }}
+                >
+                  {/* Umbră moale pe masă */}
+                  <div
+                    className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-[108%] h-3.5 rounded-full blur-[5px]"
+                    style={{ background: 'rgba(0, 0, 0, 0.8)' }}
+                  />
+
+                  {/* Cutia metalică gri (#c2c4bf, umbre #a9aba6 & #6d6f6b) */}
+                  <div
+                    className="relative w-[clamp(132px,34vw,224px)] h-[clamp(74px,13dvh,122px)] [@media(max-height:460px)]:w-[144px] [@media(max-height:460px)]:h-[64px] rounded-[3px] border border-[#6d6f6b] p-1.5 sm:p-2.5 [@media(max-height:460px)]:p-1.5 flex flex-col justify-between shadow-[0_8px_18px_rgba(0,0,0,0.75)]"
+                    style={{
+                      background:
+                        'linear-gradient(165deg, #c2c4bf 0%, #a9aba6 62%, #6d6f6b 100%)',
+                    }}
+                  >
+                    {/* Mâner superior discret */}
+                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-10 sm:w-12 h-2 rounded-t-[2px] border-2 border-b-0 border-[#4e504c] bg-[#1a1c1e]" />
+
+                    {/* Rând sus capac: Plăcuță ivoire „OP-3 ANI” + 3 LED-uri */}
+                    <div className="flex items-center justify-between gap-1.5">
+                      <div className="bg-[#e6e1d3] border border-[#6d6f6b] px-1.5 py-0.5 shadow-sm">
+                        <span className="font-tech text-[clamp(8px,1.8vw,11px)] [@media(max-height:460px)]:text-[8px] font-bold tracking-wider text-[#15171a] block leading-none">
+                          OP-3 ANI
+                        </span>
+                      </div>
+
+                      {/* 3 LED-uri mici: roșu, chihlimbar, verde */}
+                      <div className="flex items-center gap-1 sm:gap-1.5 bg-[#1b1d1e] px-1.5 py-0.5 sm:py-1 rounded-[2px] border border-[#595b57]">
+                        <span
+                          className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full border border-black ${
+                            briefcaseArmed
+                              ? reducedMotion
+                                ? 'bg-[#ff3b2a] shadow-[0_0_6px_#ff3b2a]'
+                                : 'hw-led-red-pulse'
+                              : 'bg-[#2e1514]'
+                          }`}
+                        />
+                        <span
+                          className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full border border-black transition-all duration-300 ${
+                            briefcaseArmed
+                              ? 'bg-[#e89b2d] shadow-[0_0_6px_#e89b2d]'
+                              : 'bg-[#2c2112]'
+                          }`}
+                        />
+                        <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full border border-black bg-[#13261a]" />
+                      </div>
+                    </div>
+
+                    {/* Afișaj LCD verde (VT323, #9be15d pe #1b2a12): --:-- -> 03:03 */}
+                    <div className="bg-[#1b2a12] border-2 border-[#393b37] px-2 py-0.5 sm:py-1 [@media(max-height:460px)]:py-0.5 flex items-center justify-between shadow-[inset_0_2px_8px_rgba(0,0,0,0.85)]">
+                      <span className="font-tech text-[8px] uppercase tracking-widest text-[#9be15d]/60">
+                        TMR
+                      </span>
+                      <span
+                        data-testid="cutscene-briefcase-lcd"
+                        className="font-lcd text-[clamp(18px,3.2dvh+6px,28px)] [@media(max-height:460px)]:text-[19px] leading-none tracking-[0.12em] text-[#9be15d]"
+                        style={{ textShadow: '0 0 8px rgba(155, 225, 93, 0.55)' }}
+                      >
+                        {briefcaseArmed ? '03:03' : '--:--'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* -------- Obiect 2: DOSARUL CU ȘTAMPILA „STRICT SECRET” (dreapta valizei) -------- */}
+              <div className="relative translate-y-[2px] rotate-[5deg]">
+                <div
+                  className="transition-all duration-700 ease-out"
+                  style={{
+                    opacity: folderVisible ? 1 : 0,
+                    transform: folderVisible ? 'translateX(0)' : 'translateX(20px)',
+                  }}
+                >
+                  <div
+                    className="relative w-[clamp(78px,20vw,124px)] h-[clamp(52px,9dvh,84px)] [@media(max-height:460px)]:w-[86px] [@media(max-height:460px)]:h-[48px] rounded-[2px] border border-[#8e7f63] shadow-[0_6px_14px_rgba(0,0,0,0.75)] flex flex-col justify-between p-1.5 sm:p-2 [@media(max-height:460px)]:p-1"
+                    style={{
+                      background: 'linear-gradient(155deg, #d7ccb2 0%, #bfb191 65%, #9f9070 100%)',
+                    }}
+                  >
+                    <div className="absolute -top-1.5 left-2 w-7 sm:w-8 h-1.5 rounded-t-[1px] bg-[#cbbda0] border border-b-0 border-[#8e7f63]" />
+
+                    <div className="space-y-1 opacity-45">
+                      <div className="h-[2px] w-3/4 bg-[#15171a]" />
+                      <div className="h-[2px] w-1/2 bg-[#15171a]" />
+                    </div>
+
+                    {stamped && (
+                      <div
+                        data-testid="cutscene-secret-stamp"
+                        className={`self-center border-2 border-[#c0281c] outline outline-1 outline-[#c0281c] -outline-offset-4 px-1 sm:px-1.5 py-0.5 font-display text-[clamp(7px,1.8vw,11px)] [@media(max-height:460px)]:text-[8px] font-bold tracking-[0.13em] text-[#c0281c] whitespace-nowrap ${
+                          reducedMotion ? '' : 'intro-stamp-slam'
+                        }`}
+                        style={{
+                          opacity: 0.85,
+                          filter: 'blur(0.25px)',
+                          transform: 'rotate(-8deg)',
+                        }}
+                      >
+                        STRICT SECRET
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* -------- Obiect 3: STAȚIA RADIO GALBENĂ (lângă dosar) -------- */}
+              <div
+                className="relative ml-2 sm:ml-3 -translate-y-[4px] transition-opacity duration-700 ease-out"
+                style={{ opacity: objectsVisible ? 1 : 0 }}
+              >
+                <svg
+                  viewBox="0 0 46 84"
+                  className="w-[clamp(24px,5.5vw,40px)] [@media(max-height:460px)]:w-[24px] h-auto drop-shadow-[0_6px_12px_rgba(0,0,0,0.8)]"
+                >
+                  <rect x="30" y="2" width="5" height="24" rx="2" fill="#17181a" />
+                  <rect
+                    x="6"
+                    y="23"
+                    width="34"
+                    height="56"
+                    rx="4"
+                    fill="#f1c40f"
+                    stroke="#17181a"
+                    strokeWidth="2.5"
+                  />
+                  <rect x="11" y="31" width="24" height="16" rx="2" fill="#17181a" />
+                  <line x1="14" y1="35" x2="32" y2="35" stroke="#424549" strokeWidth="1.5" />
+                  <line x1="14" y1="39" x2="32" y2="39" stroke="#424549" strokeWidth="1.5" />
+                  <line x1="14" y1="43" x2="32" y2="43" stroke="#424549" strokeWidth="1.5" />
+                  <rect x="12" y="51" width="22" height="10" rx="1" fill="#1b2a12" stroke="#17181a" strokeWidth="1" />
+                  <circle
+                    cx="15"
+                    cy="27"
+                    r="2.4"
+                    fill="#3ddc84"
+                    className={reducedMotion ? '' : 'animate-pulse'}
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ================= 4. ZONA INFERIOARĂ: POVESTE + BUTOANE (NU ACOPERĂ MASA) ================= */}
+        <div
+          className="relative z-30 shrink-0 w-full px-3 sm:px-6 pt-2 [@media(max-height:460px)]:pt-1.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] [@media(max-height:460px)]:pb-1.5 bg-gradient-to-b from-[#080705] via-[#050606] to-[#050606] border-t border-black/80 flex flex-col items-center justify-end gap-2 [@media(max-height:460px)]:gap-1.5 min-h-[clamp(142px,30dvh,225px)] [@media(max-height:460px)]:min-h-0"
+        >
+          {storyVisible && (
+            <div
+              data-testid="cutscene-story-panel"
+              className="w-full max-w-xl bg-[#050606]/85 border border-[#e6e1d3]/35 px-3 sm:px-5 py-2 sm:py-2.5 [@media(max-height:460px)]:py-1.5 shadow-[0_8px_24px_rgba(0,0,0,0.85)]"
+            >
+              <div className="font-tech text-[clamp(11px,1.2dvh+8px,15px)] [@media(max-height:460px)]:text-[11px] leading-snug sm:leading-relaxed text-[#e6e1d3] min-h-[3.6em] [@media(max-height:460px)]:min-h-0">
+                {typedLines.map((line, i) => (
+                  <p key={i} className="m-0">
+                    {line}
+                    {i === typedLines.length - 1 &&
+                      storyChars < STORY_FULL_TEXT.length &&
+                      !reducedMotion && (
+                        <span aria-hidden="true" className="det-cursor-blink ml-0.5 text-[#ffd9a0]">
+                          _
+                        </span>
+                      )}
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {buttonsVisible && (
+            <div className="flex flex-col sm:flex-row [@media(max-height:460px)]:flex-row items-center justify-center gap-2 [@media(max-height:460px)]:gap-2 w-full max-w-lg">
+              {/* Buton central mare, stil plăcuță dymo */}
+              <button
+                type="button"
+                data-testid="cutscene-start-btn"
+                onClick={triggerFinish}
+                className={`w-full sm:w-auto min-h-[46px] [@media(max-height:460px)]:min-h-[44px] px-6 py-2 bg-[#101a2b] border border-[#e6e1d3]/65 hover:border-[#ffd9a0] text-[#e6e1d3] hover:text-[#ffd9a0] font-display text-[clamp(14px,1.2vw+10px,17px)] font-bold tracking-[0.16em] uppercase rounded-[2px] cursor-pointer transition-colors whitespace-nowrap focus-visible:outline-2 focus-visible:outline-[#ffd9a0] ${
+                  reducedMotion ? '' : 'intro-cta-pulse'
+                }`}
+              >
+                ÎNCEPE MISIUNEA
+              </button>
+
+              {/* Buton secundar pentru deschiderea manualului */}
+              {onOpenManual && (
+                <button
+                  type="button"
+                  data-testid="cutscene-manual-btn"
+                  onClick={onOpenManual}
+                  className="min-h-[44px] px-4 py-1.5 font-tech text-xs tracking-wide text-[#e6e1d3]/85 hover:text-[#ffd9a0] bg-[#0a0d0c] border border-[#e6e1d3]/25 hover:border-[#ffd9a0]/55 rounded-[2px] cursor-pointer transition-colors whitespace-nowrap focus-visible:outline-2 focus-visible:outline-[#ffd9a0]"
+                >
+                  📖 Citește manualul
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* ================= 5. EFECTE DE ECRAN: FILM GRAIN, SCANLINES, VIGNETĂ ================= */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
+          {!reducedMotion && <div className="det-film-grain absolute -inset-6" />}
+          <div className="absolute inset-x-0 top-[26%] h-px bg-[#9be15d]/[0.04]" />
+          <div className="absolute inset-x-0 top-[54%] h-px bg-[#9be15d]/[0.035]" />
+          <div className="absolute inset-x-0 top-[81%] h-px bg-[#9be15d]/[0.04]" />
           <div
             className="absolute inset-0"
             style={{
               background:
-                'radial-gradient(ellipse 35% 44% at 32% 45%, rgba(5, 7, 10, 0.42) 0%, transparent 72%), radial-gradient(ellipse 30% 40% at 76% 32%, rgba(5, 7, 10, 0.35) 0%, transparent 72%)',
-              mixBlendMode: 'multiply',
+                'radial-gradient(ellipse 74% 70% at 50% 45%, transparent 44%, rgba(5, 6, 6, 0.52) 82%, rgba(5, 6, 6, 0.92) 100%)',
             }}
           />
-
-          <svg viewBox="0 0 1600 620" className="w-full h-full">
-            {/* Corner cobweb top-left */}
-            <g stroke="#6d726c" strokeWidth="1" strokeOpacity="0.32" fill="none">
-              <line x1="0" y1="0" x2="185" y2="35" />
-              <line x1="0" y1="0" x2="155" y2="105" />
-              <line x1="0" y1="0" x2="105" y2="165" />
-              <line x1="0" y1="0" x2="45" y2="195" />
-              <path d="M 45 8 Q 40 34 14 44" />
-              <path d="M 92 17 Q 76 62 28 96" />
-              <path d="M 142 26 Q 112 94 40 152" />
-            </g>
-
-            {/* Ceiling dangling cables */}
-            <path d="M 460 0 Q 478 88 455 154" fill="none" stroke="#0c0d0d" strokeWidth="4" />
-            <path d="M 476 0 Q 468 65 490 120" fill="none" stroke="#181b1a" strokeWidth="2.5" />
-            <path d="M 1410 0 Q 1392 75 1418 148" fill="none" stroke="#0c0d0d" strokeWidth="3.5" />
-
-            {/* Peeling wallpaper strips & plaster cracks */}
-            <polygon points="360,88 430,72 412,174 352,150" fill="#101311" />
-            <polyline points="430,72 412,174 422,164" fill="none" stroke="#2c342e" strokeWidth="2" />
-            <polygon points="1290,120 1365,134 1344,218 1280,192" fill="#0f1210" />
-            <path d="M 650 140 L 675 198 L 658 260 L 682 315" fill="none" stroke="#090b0a" strokeWidth="2" />
-
-            {/* Corkboard in deep shadow behind table */}
-            <g opacity={bulbOn ? 0.52 : 0.14}>
-              <rect x="640" y="190" width="240" height="165" fill="#231c15" stroke="#110e0b" strokeWidth="5" />
-              <rect x="665" y="212" width="46" height="54" fill="#6f6a5f" transform="rotate(-4 688 239)" />
-              <rect x="735" y="206" width="58" height="42" fill="#635e54" transform="rotate(3 764 227)" />
-              <rect x="810" y="226" width="48" height="58" fill="#757065" transform="rotate(-2 834 255)" />
-              <polyline
-                points="688,218 764,214 834,234 712,298 815,310 688,218"
-                fill="none"
-                stroke="#7f1d1d"
-                strokeWidth="1.5"
-              />
-            </g>
-
-            {/* Venetian window light slats (upper right) */}
-            <g transform="rotate(-14 1320 150)" opacity="0.08">
-              {[0, 1, 2, 3, 4, 5].map((b) => (
-                <rect key={b} x="1180" y={65 + b * 48} width="380" height="22" fill="#7f9bb8" />
-              ))}
-            </g>
-
-            {/* Overturned wooden chair in shadowed background */}
-            <g transform="translate(495, 535) rotate(-68)" opacity={bulbOn ? 0.65 : 0.25}>
-              <rect x="0" y="0" width="66" height="10" fill="#1b1510" stroke="#0a0806" strokeWidth="1.5" />
-              <rect x="4" y="10" width="8" height="62" fill="#14100c" />
-              <rect x="52" y="10" width="8" height="62" fill="#14100c" />
-              <rect x="2" y="-68" width="8" height="68" fill="#17120e" />
-            </g>
-          </svg>
-
-          {/* Baseboard */}
-          <div className="absolute inset-x-0 bottom-0 h-6 bg-[#0a0e13] border-t border-[#4b5766]/30" />
         </div>
 
-        {/* ================= WOODEN PLANK FLOOR ================= */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-x-0 bottom-0 h-[280px]"
-          style={{
-            background:
-              'linear-gradient(180deg, #1b1712 0%, #110e0b 55%, #060606 100%)',
-          }}
-        >
-          {/* Wood plank joints + fallen plaster rubble bits */}
-          <svg viewBox="0 0 1600 280" className="w-full h-full">
-            {[0, 1, 2, 3, 4, 5].map((row) => (
-              <line
-                key={row}
-                x1="0"
-                y1={24 + row * 44}
-                x2="1600"
-                y2={24 + row * 44}
-                stroke="#070605"
-                strokeWidth="2"
-              />
-            ))}
-            {[220, 510, 780, 1080, 1340].map((vx, i) => (
-              <line
-                key={vx}
-                x1={vx}
-                y1={(i % 2) * 44 + 24}
-                x2={vx - 35}
-                y2={(i % 2) * 44 + 68}
-                stroke="#070605"
-                strokeWidth="1.8"
-              />
-            ))}
-            {/* Fallen plaster fragments */}
-            <polygon points="355,48 370,44 374,56 359,58" fill="#4f4d44" />
-            <polygon points="384,60 392,58 395,66 382,66" fill="#3d3b34" />
-            <polygon points="1282,52 1296,49 1300,59 1285,61" fill="#4b4941" />
-          </svg>
-        </div>
-
-        {/* ================= LEFT DOORFRAME & COLD HALLWAY LIGHT ================= */}
-        <div
-          aria-hidden="true"
-          className="absolute left-[72px] top-[185px] w-[196px] h-[445px]"
-          style={{ perspective: '900px' }}
-        >
-          {/* Open doorway cold blue interior */}
+        {/* ================= 6. TEXT DE DESCHIDERE 0.0–0.8s (STÂNGA-JOS) ================= */}
+        {stampIntroVisible && (
           <div
-            className="absolute inset-0 transition-opacity duration-500"
-            style={{
-              background: 'linear-gradient(180deg, #7f9bb8 0%, #486079 68%, #222e3c 100%)',
-              opacity: doorOpen ? 0.92 : 0,
-            }}
-          />
-
-          {/* Thin cold light crack under closed door */}
-          <div
-            className="absolute inset-x-1 -bottom-1 h-2 bg-[#7f9bb8] blur-[1px] transition-opacity duration-300"
-            style={{ opacity: doorOpen ? 0 : 0.4 }}
-          />
-
-          {/* Cold Trapezoidal Light Beam Cast Across Floor when Door Opens */}
-          <div
-            className="pointer-events-none absolute left-[8px] top-[440px] w-[520px] h-[220px] transition-opacity duration-500"
-            style={{
-              clipPath: 'polygon(0% 0%, 36% 0%, 100% 100%, 8% 100%)',
-              background:
-                'linear-gradient(125deg, rgba(127, 155, 184, 0.34) 0%, rgba(127, 155, 184, 0.08) 68%, transparent 100%)',
-              opacity: doorOpen ? 1 : 0,
-            }}
-          />
-
-          {/* Wooden Door Panel rotating in rotateY */}
-          <motion.div
-            animate={{ rotateY: doorOpen ? -76 : 0 }}
-            transition={{ duration: 0.95, ease: [0.22, 1, 0.36, 1] }}
-            style={{ transformOrigin: 'left center' }}
-            className="relative w-full h-full bg-gradient-to-b from-[#2b231b] to-[#1a1510] border-4 border-[#110d0a] shadow-[12px_10px_28px_rgba(0,0,0,0.88)]"
+            data-testid="cutscene-time-stamp"
+            className="pointer-events-none fixed left-[max(1rem,env(safe-area-inset-left))] bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 transition-opacity duration-500"
           >
-            {/* Peeling dark paint recessed panels */}
-            <div className="m-5 h-[170px] border-2 border-[#120e0a] bg-[#211b14]" />
-            <div className="mx-5 mt-5 h-[185px] border-2 border-[#120e0a] bg-[#1e1812]" />
-            {/* Brass doorknob */}
-            <div className="absolute right-3.5 top-[220px] w-4 h-4 rounded-full bg-[#b59449] border border-[#594418] shadow" />
-          </motion.div>
-        </div>
-
-        {/* ================= TABLE, LACE CLOTH, DEVICE & WALKIE-TALKIE (Right-Center) ================= */}
-        <div aria-hidden="true" className="absolute left-[960px] top-[465px] w-[420px] h-[240px]">
-          {/* Wooden Chair (slides slightly as detective approaches & sits) */}
-          <motion.div
-            animate={{ x: chairX - 965 }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
-            className="absolute -left-[35px] top-[20px] w-[76px] h-[165px]"
-          >
-            <svg viewBox="0 0 80 170" className="w-full h-full">
-              {/* Backrest */}
-              <rect x="6" y="4" width="10" height="160" fill="#2c2117" stroke="#0c0805" strokeWidth="1.5" />
-              <rect x="6" y="18" width="14" height="38" fill="#3a2b1d" />
-              {/* Seat */}
-              <rect x="8" y="84" width="66" height="10" fill="#3a2b1d" stroke="#0c0805" strokeWidth="1.5" />
-              {/* Front leg */}
-              <rect x="62" y="94" width="10" height="72" fill="#251b12" stroke="#0c0805" strokeWidth="1.2" />
-            </svg>
-          </motion.div>
-
-          {/* Table Legs */}
-          <div className="absolute left-[58px] top-[72px] w-4 h-[155px] bg-[#1c150f] border-x border-black" />
-          <div className="absolute right-[44px] top-[72px] w-4 h-[155px] bg-[#17110c] border-x border-black" />
-
-          {/* Table Top & Embroidered Lace Cloth Drape */}
-          <div
-            className="relative w-full h-[88px] rounded-[2px] border border-[#524d40] shadow-[0_18px_36px_rgba(0,0,0,0.92)] overflow-hidden transition-all duration-300"
-            style={{
-              background: bulbOn && !bulbFlicker
-                ? 'linear-gradient(180deg, #d9d3c4 0%, #8a8576 58%, #3a382f 100%)'
-                : 'linear-gradient(180deg, #2b2924 0%, #171612 65%, #080807 100%)',
-            }}
-          >
-            {/* Subtle scalloped lace edge overhang */}
-            <div className="absolute inset-x-0 bottom-0 h-5 border-t border-dashed border-[#bdb6a4]/45 bg-black/25" />
-          </div>
-
-          {/* 3D Matte Gray Device Silhouette on Table */}
-          <div
-            className="absolute left-[138px] -top-[42px] w-[148px] h-[54px] border border-[#595b57] shadow-lg transition-colors duration-300"
-            style={{
-              background: bulbOn && !bulbFlicker ? '#c2c4bf' : '#1e201e',
-            }}
-          >
-            <div className="h-2 bg-[#172030]" />
-            <div className="p-1.5 grid grid-cols-4 gap-1">
-              {[0, 1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className={`h-6 border ${
-                    bulbOn && !bulbFlicker
-                      ? 'bg-[#e6e1d3] border-[#6d6f6b]'
-                      : 'bg-[#15171a] border-black'
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Yellow/Black Walkie-Talkie on Table Edge */}
-          <div
-            className="absolute left-[298px] -top-[18px] w-[42px] h-[22px] -rotate-12 border border-black shadow-md transition-colors duration-300 flex items-center justify-center"
-            style={{
-              background: bulbOn && !bulbFlicker ? '#f1c40f' : '#2f2708',
-            }}
-          >
-            <div
-              className={`w-6 h-3 transition-all duration-200 ${
-                radioActive
-                  ? 'bg-[#9be15d] shadow-[0_0_8px_#9be15d]'
-                  : 'bg-[#1b2a12]'
-              }`}
-            />
-          </div>
-
-          {/* Radio Status Slip at 10.5s */}
-          {radioActive && (
-            <motion.div
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="absolute left-[255px] -top-[58px] bg-[#1b2a12] border border-[#9be15d]/60 px-2 py-1 font-lcd text-sm text-[#9be15d] whitespace-nowrap shadow-[0_0_12px_rgba(155,225,93,0.3)]"
+            <p
+              className="font-lcd text-[clamp(20px,3vw+10px,28px)] tracking-wider text-[#9be15d]"
+              style={{ textShadow: '0 0 8px rgba(155, 225, 93, 0.5)' }}
             >
-              CH 03 · SEMNAL SLAB
-            </motion.div>
-          )}
-        </div>
-
-        {/* ================= DETECTIVE SILHOUETTE ================= */}
-        {detectiveVisible && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1, x: detectiveX }}
-            transition={{
-              opacity: { duration: 0.45 },
-              x: { duration: walkDur, ease: 'linear' },
-            }}
-            className="absolute left-0 top-[248px] w-[190px] h-[398px] z-[8]"
-          >
-            <DetectiveSilhouette
-              pose={pose}
-              facing="right"
-              rimSide={bulbOn ? 'right' : 'left'}
-              showDoorShadow={doorOpen && !bulbOn}
-              className="w-full h-full"
-            />
-          </motion.div>
+              SINAIA · 03:03
+            </p>
+          </div>
         )}
 
-        {/* ================= HANGING OVERHEAD LAMP & WARM LIGHT CONE ================= */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute left-[1130px] top-0 -translate-x-1/2 flex flex-col items-center z-[12]"
-        >
-          <div className="w-[3px] h-[160px] bg-[#0c0d0d]" />
-          <svg viewBox="0 0 120 48" className="w-28 h-12 -mt-0.5">
-            <rect x="54" y="0" width="12" height="9" fill="#181b19" />
-            <path d="M 48 8 L 72 8 L 106 38 L 14 38 Z" fill="#16231b" stroke="#0c120e" strokeWidth="1.5" />
-            <ellipse
-              cx="60"
-              cy="38"
-              rx="45"
-              ry="6"
-              fill={bulbOn && !bulbFlicker ? '#d9d3c4' : '#2a2c29'}
-            />
-            <circle
-              cx="60"
-              cy="40"
-              r="7.5"
-              fill={bulbOn && !bulbFlicker ? '#ffd9a0' : '#2a2d2b'}
-            />
-          </svg>
-
-          {bulbOn && !bulbFlicker && (
-            <div
-              className="w-[780px] h-[540px] -mt-2"
-              style={{
-                clipPath: 'polygon(44% 0%, 56% 0%, 100% 100%, 0% 100%)',
-                background:
-                  'radial-gradient(ellipse 68% 76% at 50% 24%, rgba(255, 217, 160, 0.92) 0%, rgba(232, 182, 111, 0.42) 52%, transparent 82%)',
-                mixBlendMode: 'screen',
-                opacity: 0.25,
-              }}
-            />
-          )}
-        </div>
-      </motion.div>
-
-      {/* Dark ambient veil before bulb turns on */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[#050606] transition-opacity duration-500"
-        style={{
-          opacity: doorOpen && !bulbOn ? 0.28 : !doorOpen && !bulbOn ? 0.85 : 0,
-        }}
-      />
-
-      {/* Film grain & perimeter vignette over cutscene */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
-        <div className="det-film-grain absolute -inset-6" />
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              'radial-gradient(ellipse 74% 72% at 50% 48%, transparent 50%, rgba(5, 6, 6, 0.58) 84%, rgba(5, 6, 6, 0.92) 100%)',
-          }}
-        />
-      </div>
-
-      {/* Discreet Skip Button (bottom-right after 1.5s) */}
-      {showSkip && !reducedMotion && (
-        <motion.button
+        {/* ================= 7. BUTON DISCRET „SARI PESTE ›” (DREAPTA-SUS, >=44×44px) ================= */}
+        <button
           type="button"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.85 }}
-          whileHover={{ opacity: 1 }}
-          onClick={finishOnce}
-          aria-label="Sari peste animația de introducere"
-          className="fixed bottom-5 right-5 z-30 min-h-[44px] px-3.5 py-2 det-dymo-label text-xs font-bold tracking-wider cursor-pointer focus-visible:outline-2 focus-visible:outline-[#ffd9a0]"
+          data-testid="cutscene-skip-btn"
+          onClick={handleSkipClick}
+          aria-label="Sari peste secvența de introducere"
+          className="fixed top-[max(0.65rem,env(safe-area-inset-top))] right-[max(0.65rem,env(safe-area-inset-right))] z-40 min-w-[44px] min-h-[44px] px-2.5 py-1.5 flex items-center justify-center font-tech text-[11px] tracking-wider text-[#e6e1d3]/75 hover:text-[#ffd9a0] bg-[#050606]/45 border border-[#e6e1d3]/15 hover:border-[#ffd9a0]/50 rounded-[2px] cursor-pointer transition-colors whitespace-nowrap focus-visible:outline-2 focus-visible:outline-[#ffd9a0]"
         >
-          Sari peste ▸▸
-        </motion.button>
-      )}
-    </motion.div>
+          Sari peste ›
+        </button>
+      </div>
+    </div>
   );
 };
