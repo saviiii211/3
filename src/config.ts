@@ -90,8 +90,39 @@ export const INTRO_HEADER_LINES: string[] = [
 
 export const INTRO_TYPING_MS = 38;
 
-export const INTRO_TEXT =
-  "[[AICI VA FI TEXTUL INTRODUCTIV — îl înlocuiesc eu ulterior]]";
+export const INTRO_TEXT =`ROMÂNIA
+MINISTERUL AFACERILOR INTERNE
+Direcția Specială pentru Intervenții Pirotehnice și Anchete Speciale
+
+Nr. înreg.: DSIP/03/[data]
+Clasificare: STRICT SECRET – DE IMPORTANȚĂ DEOSEBITĂ
+Caracter: URGENT
+
+CĂTRE: Domnul Detectiv Dicianu Stefan
+DE LA: Direcția Specială pentru Intervenții Pirotehnice și Anchete Speciale
+OBIECT: Convocare de urgență pentru misiune de dezamorsare și localizare
+
+Stimate Domnule Detectiv,
+
+Având în vedere experiența Dumneavoastră remarcabilă și rezultatele obținute în dosarul anului trecut, Direcția noastră Vă convoacă de urgență pentru o misiune cu grad maxim de risc.
+
+Au fost interceptate informații conform cărora un dispozitiv exploziv a fost amplasat într-una dintre locațiile din orașul Sinaia. Locația exactă este necunoscută. Singura sursă de informații disponibilă este un sistem de localizare securizat.
+Instrucțiuni operative:
+
+Sistemul Vă va solicita rezolvarea unei serii de teste de securitate. Fiecare test rezolvat corect va debloca coordonatele următoarei locații.
+Urmați indicațiile GPS-ului până la fiecare punct stabilit. Timpul este limitat.
+Spre destinația finală, dispozitivul va trebui dezamorsat prin ultimul modul. Orice eroare poate avea consecințe grave.
+
+Atenție! Misiunea este strict confidențială. Nu divulgați detaliile unor persoane neautorizate și nu abandonați misiunea înainte de finalizare. Echipamentul necesar (încălțăminte comodă, simț al observației și spirit de echipă) este obligatoriu.
+
+Vă mulțumim pentru dedicare și Vă dorim succes.
+
+Cu deosebită considerație,
+Director General Interimar,
+Sbabi
+
+Semnătură și ștampilă <3`
+ ";
 
 export type RadioLineCategory =
   | 'atmosphere'
