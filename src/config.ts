@@ -121,8 +121,7 @@ Cu deosebită considerație,
 Director General Interimar,
 Sbabi
 
-Semnătură și ștampilă <3`
- ";
+Semnătură și ștampilă <3`;
 
 export type RadioLineCategory =
   | 'atmosphere'
