@@ -990,6 +990,10 @@ body {
   animation: manual-modal-fade 200ms ease-out forwards;
 }
 
+.finale-video-enter {
+  animation: manual-modal-fade 400ms ease-out forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-hw-shake,
   .animate-strike-flash,
@@ -1016,7 +1020,8 @@ body {
   .intro-scene-shake,
   .intro-dust-mote,
   .intro-cta-pulse,
-  .manual-modal-enter {
+  .manual-modal-enter,
+  .finale-video-enter {
     animation: none !important;
   }
   .bomb-3d-assembly {

@@ -94,7 +94,7 @@ export const INTRO_TEXT =`ROMÂNIA
 MINISTERUL AFACERILOR INTERNE
 Direcția Specială pentru Intervenții Pirotehnice și Anchete Speciale
 
-Nr. înreg.: DSIP/03/[data]
+Nr. înreg.: DSIP/03/27.11.2026
 Clasificare: STRICT SECRET – DE IMPORTANȚĂ DEOSEBITĂ
 Caracter: URGENT
 
